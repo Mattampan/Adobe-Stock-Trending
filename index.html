@@ -1,0 +1,2640 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockPulse — Adobe Stock Daily Trend Radar</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              500: '#fa1e4e', // Adobe-inspired vibrant crimson
+              600: '#e11440',
+              700: '#be0e34',
+              900: '#880723',
+            },
+            adobe: {
+              dark: '#111317',
+              card: '#1a1d24',
+              border: '#2a2f3a',
+              accent: '#3b82f6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(30, 41, 59, 0.5);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.6);
+    }
+    .badge-shimmer {
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite linear;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+</head>
+<body class="bg-[#0c0d11] text-slate-100 min-h-screen flex flex-col selection:bg-rose-500 selection:text-white custom-scrollbar w-full overflow-x-hidden">
+
+  <header class="sticky top-0 z-40 bg-[#111318]/95 backdrop-blur-md border-b border-slate-800 w-full">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+      <div class="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-gradient-to-tr from-brand-600 via-rose-500 to-amber-500 p-[2px] shadow-lg shadow-rose-950/40">
+          <div class="w-full h-full bg-[#111318] rounded-[10px] flex items-center justify-center">
+            <i data-lucide="sparkles" class="w-4 h-4 sm:w-5 sm:h-5 text-rose-500"></i>
+          </div>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center space-x-1.5 sm:space-x-2">
+            <span class="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent truncate">StockPulse</span>
+            <span class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 font-semibold border border-rose-500/20 shrink-0">Radar</span>
+          </div>
+          <p class="text-[10px] sm:text-[11px] text-slate-400 hidden sm:block truncate">Commercial Insights & Trend Tracker for Microstock Creators</p>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+        <button id="dataSourceInfoBtn" class="flex items-center space-x-1 sm:space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+          <span class="hidden sm:inline">Detail Sumber Data</span>
+          <span class="sm:hidden text-[11px]">Sumber</span>
+        </button>
+        <button id="syncTrendsBtn" class="relative group flex items-center space-x-1 sm:space-x-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white bg-gradient-to-r from-brand-600 to-rose-600 hover:from-brand-500 hover:to-rose-500 shadow-md shadow-rose-900/30 active:scale-95 transition">
+          <i data-lucide="refresh-cw" id="syncIcon" class="w-3.5 h-3.5 shrink-0"></i>
+          <span id="syncText" class="text-[11px] sm:text-xs">Update AI</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 overflow-hidden">
+
+    <!-- Top Insight Banner -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-rose-950/20 to-slate-900 border border-slate-800 p-4 sm:p-6">
+      <div class="absolute -right-16 -top-16 w-52 h-52 bg-rose-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+        <div class="space-y-1.5 max-w-2xl">
+          <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] sm:text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+            <span id="todayDateLabel">Market Date: Update Siap</span>
+          </div>
+          <h1 class="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">Daily High-Demand Trending Assets</h1>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            Daftar 10 subjek paling dicari pembeli Adobe Stock berdasarkan <strong class="text-rose-400">Sumber Data</strong>, lengkap dengan durasi <span class="text-amber-400 font-medium">Hari Strike</span> dan indikator <span class="text-emerald-400 font-medium">Naik/Turun Peringkat</span> harian.
+          </p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full lg:w-auto lg:min-w-[280px]">
+          <div class="bg-slate-900/80 border border-slate-800 p-2 sm:p-3 rounded-xl text-center">
+            <div class="text-[10px] sm:text-[11px] text-slate-400 truncate">Streak Terlama</div>
+            <div class="text-xs sm:text-sm font-bold text-amber-400 mt-0.5">28 Hari 🔥</div>
+          </div>
+          <div class="bg-slate-900/80 border border-slate-800 p-2 sm:p-3 rounded-xl text-center">
+            <div class="text-[10px] sm:text-[11px] text-slate-400 truncate">Top Gainer</div>
+            <div class="text-xs sm:text-sm font-bold text-emerald-400 mt-0.5">▲ +5 Rank</div>
+          </div>
+          <div class="bg-slate-900/80 border border-slate-800 p-2 sm:p-3 rounded-xl text-center">
+            <div class="text-[10px] sm:text-[11px] text-slate-400 truncate">Algoritma Index</div>
+            <div class="text-xs sm:text-sm font-bold text-rose-400 mt-0.5">Top 10 Tags</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source Selector & Navigation -->
+    <div class="space-y-3">
+      <!-- Data Source Switcher (Sumber Data A, B, C) with mobile scroll wrapper -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-rose-500"></i>
+          Pilih Sumber Data:
+        </label>
+        <div class="w-full overflow-x-auto pb-1.5 custom-scrollbar">
+          <div class="inline-flex p-1 rounded-xl bg-slate-900/90 border border-slate-800 gap-1 min-w-max">
+            <button id="srcBtnA" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-rose-600 text-white shadow-sm whitespace-nowrap">
+              <span class="w-2 h-2 rounded-full bg-white shrink-0"></span>
+              <span>Sumber A: Adobe Artist Hub</span>
+            </button>
+            <button id="srcBtnB" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition whitespace-nowrap">
+              <span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
+              <span>Sumber B: Adobe Best-Selling</span>
+            </button>
+            <button id="srcBtnC" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition whitespace-nowrap">
+              <span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
+              <span>Sumber C: Global Intent</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Filter Bar (Foto, Vector/Image, Video) -->
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <!-- Media Type Sub-Tabs (Flex Grid in mobile to avoid overflow) -->
+        <div class="grid grid-cols-3 sm:flex p-1 rounded-xl bg-slate-900/90 border border-slate-800 gap-1 w-full sm:w-auto">
+          <button id="tabFoto" class="flex items-center justify-center space-x-1.5 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs font-semibold transition bg-rose-600 text-white shadow-sm truncate">
+            <i data-lucide="camera" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="truncate">Foto</span>
+          </button>
+          <button id="tabImage" class="flex items-center justify-center space-x-1.5 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition truncate">
+            <i data-lucide="palette" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="truncate">Vector</span>
+          </button>
+          <button id="tabVideo" class="flex items-center justify-center space-x-1.5 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition truncate">
+            <i data-lucide="video" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="truncate">Video</span>
+          </button>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="flex items-center space-x-2 w-full md:w-auto">
+          <div class="relative flex-1 md:w-56">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input id="searchInput" type="text" placeholder="Cari keyword..." 
+              class="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-slate-900/80 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition">
+          </div>
+          <select id="filterType" class="bg-slate-900/80 border border-slate-800 text-xs rounded-lg px-2 py-1.5 text-slate-300 focus:outline-none focus:border-rose-500 shrink-0">
+            <option value="all">Semua Tipe</option>
+            <option value="Breakout">🔥 Breakout</option>
+            <option value="Evergreen">🌲 Evergreen</option>
+            <option value="Seasonal">🍂 Seasonal</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Trend Velocity Chart (Foto vs Vector vs Video) -->
+    <div class="rounded-2xl bg-[#13161f] border border-slate-800/90 p-3.5 sm:p-5 shadow-xl space-y-3.5 w-full overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+        <div class="space-y-0.5">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="line-chart" class="w-4 h-4 text-rose-500 shrink-0"></i>
+            <h2 class="text-xs sm:text-sm font-bold text-white tracking-tight">Grafik Fluktuasi Permintaan (7 Hari)</h2>
+          </div>
+          <p class="text-[10px] sm:text-[11px] text-slate-400 leading-tight">Perbandingan indeks akumulasi unduhan & pencarian harian pada sumber aktif.</p>
+        </div>
+
+        <!-- Legend & Visibility Toggles with Color Sync -->
+        <div class="flex items-center flex-wrap gap-1.5 sm:gap-2 text-xs">
+          <!-- Foto Toggle (Rose) -->
+          <button id="toggleGraphFoto" class="flex items-center space-x-1.5 px-2 py-1 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition cursor-pointer select-none">
+            <span class="w-2 h-2 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50"></span>
+            <span class="font-semibold text-[10px] sm:text-[11px]">Foto</span>
+          </button>
+          <!-- Vector Toggle (Amber) -->
+          <button id="toggleGraphVector" class="flex items-center space-x-1.5 px-2 py-1 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition cursor-pointer select-none">
+            <span class="w-2 h-2 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span>
+            <span class="font-semibold text-[10px] sm:text-[11px]">Vector</span>
+          </button>
+          <!-- Video Toggle (Cyan) -->
+          <button id="toggleGraphVideo" class="flex items-center space-x-1.5 px-2 py-1 rounded-lg border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 transition cursor-pointer select-none">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-500/50"></span>
+            <span class="font-semibold text-[10px] sm:text-[11px]">Video</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Canvas Area with Glass Container -->
+      <div class="relative w-full h-48 sm:h-64 bg-slate-950/60 rounded-xl p-2 border border-slate-800/60 flex items-center justify-center overflow-hidden">
+        <canvas id="trendVelocityCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+        <!-- Floating Tooltip -->
+        <div id="chartTooltip" class="hidden absolute pointer-events-none bg-slate-900/95 border border-slate-700/80 px-2.5 py-1.5 rounded-xl text-xs text-white shadow-2xl backdrop-blur-md z-30 transition-all duration-75 space-y-1 max-w-[160px]">
+          <div id="tooltipDate" class="text-[10px] text-slate-400 font-semibold border-b border-slate-800 pb-0.5">Senin</div>
+          <div id="tooltipContent" class="space-y-0.5 text-[10px] sm:text-[11px]"></div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Summary below graph -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+        <div class="p-2 sm:p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2 min-w-0">
+            <div class="w-1.5 h-6 rounded-full bg-rose-500 shrink-0"></div>
+            <div class="min-w-0">
+              <span class="text-[9px] sm:text-[10px] text-slate-400 block font-medium">Dominasi Foto</span>
+              <span class="text-[11px] sm:text-xs font-bold text-slate-100 truncate block" id="statFotoGrowth">Healthcare & Tech</span>
+            </div>
+          </div>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 font-bold shrink-0 ml-1">94%</span>
+        </div>
+
+        <div class="p-2 sm:p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2 min-w-0">
+            <div class="w-1.5 h-6 rounded-full bg-amber-500 shrink-0"></div>
+            <div class="min-w-0">
+              <span class="text-[9px] sm:text-[10px] text-slate-400 block font-medium">Dominasi Vector</span>
+              <span class="text-[11px] sm:text-xs font-bold text-slate-100 truncate block" id="statVectorGrowth">UI/UX & 3D Glass</span>
+            </div>
+          </div>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-bold shrink-0 ml-1">91%</span>
+        </div>
+
+        <div class="p-2 sm:p-2.5 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2 min-w-0">
+            <div class="w-1.5 h-6 rounded-full bg-cyan-400 shrink-0"></div>
+            <div class="min-w-0">
+              <span class="text-[9px] sm:text-[10px] text-slate-400 block font-medium">Dominasi Video</span>
+              <span class="text-[11px] sm:text-xs font-bold text-slate-100 truncate block" id="statVideoGrowth">9:16 POV & Drone</span>
+            </div>
+          </div>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-400 font-bold shrink-0 ml-1">97%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source Description Header -->
+    <div id="sourceBanner" class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 flex items-center justify-between text-xs">
+      <div class="flex items-center space-x-2 min-w-0">
+        <i data-lucide="info" class="w-4 h-4 text-rose-400 shrink-0"></i>
+        <span id="sourceBannerText" class="text-slate-300 text-[11px] sm:text-xs truncate sm:whitespace-normal">
+          Menampilkan tren resmi dari <strong>Sumber Data A</strong>.
+        </span>
+      </div>
+      <span class="text-[10px] text-slate-400 hidden lg:inline shrink-0 ml-2">Diperbarui setiap 24 jam</span>
+    </div>
+
+    <!-- Notification Toast Box -->
+    <div id="toast" class="hidden fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 bg-slate-900 border border-emerald-500/40 text-emerald-400 px-3.5 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 text-xs transition-all duration-300 max-w-[90vw]">
+      <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+      <span id="toastMessage" class="truncate">Keywords berhasil disalin!</span>
+    </div>
+
+    <div id="trendsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 w-full">
+      <!-- Cards dynamically rendered via JavaScript -->
+    </div>
+
+    <!-- Loading Skeleton (hidden by default) -->
+    <div id="loadingState" class="hidden py-16 text-center space-y-4">
+      <div class="inline-block relative">
+        <div class="w-10 h-10 border-4 border-rose-500/20 border-t-rose-500 rounded-full animate-spin"></div>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-300 font-medium">Sedang meneliti query tren terbaru di Adobe Stock...</p>
+    </div>
+
+  </main>
+
+  <div id="dataSourceModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#14171f] border border-slate-800 rounded-2xl max-w-xl w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-white">Struktur 3 Sumber Data</h3>
+            <p class="text-[11px] text-slate-400">Bagaimana tren dikurasi</p>
+          </div>
+        </div>
+        <button id="closeModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300 leading-relaxed overflow-y-auto pr-1 custom-scrollbar">
+        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+          <h4 class="font-bold text-white flex items-center gap-1.5 text-xs">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            Sumber Data A: Adobe Artist Hub & Creative Trends
+          </h4>
+          <p class="text-[11px] text-slate-300">Riset visual resmi kurasi Adobe Blog & Artist Hub yang di-feature di halaman depan buyer.</p>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+          <h4 class="font-bold text-white flex items-center gap-1.5 text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Sumber Data B: Adobe Stock Best-Selling Query
+          </h4>
+          <p class="text-[11px] text-slate-300">Berdasarkan query pencarian langsung di Adobe Stock dengan parameter internal <code>order=nb_downloads</code> 30 hari.</p>
+        </div>
+
+        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+          <h4 class="font-bold text-white flex items-center gap-1.5 text-xs">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Sumber Data C: Global Buyer Search Volume
+          </h4>
+          <p class="text-[11px] text-slate-300">Mengkombinasikan Google Trends, kebutuhan agensi, dan kalender promosi global.</p>
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end border-t border-slate-800">
+        <button id="gotItBtn" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aiPromptModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#14171f] border border-slate-800 rounded-2xl max-w-xl w-full p-4 sm:p-5 space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="wand-2" class="w-4 h-4 text-rose-500"></i>
+          <h3 class="text-xs sm:text-sm font-bold text-white">AI Image / Video Prompt</h3>
+        </div>
+        <button id="closeAiModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-[11px] text-slate-400">Prompt siap pakai untuk Adobe Firefly, Midjourney, atau Runway:</p>
+        <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+          <p id="aiPromptContent" class="text-[11px] text-slate-200 leading-relaxed font-mono select-all break-words">
+            Loading prompt...
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-1">
+        <button id="copyPromptBtn" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold transition">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>Salin Prompt</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-slate-800/80 bg-[#0d0f14] py-4 sm:py-6 text-center text-xs text-slate-500 w-full">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p class="text-[11px] sm:text-xs">© 2026 StockPulse. Dibuat khusus untuk Microstock Creators.</p>
+      <div class="flex items-center space-x-2 sm:space-x-3 text-[10px] sm:text-xs text-slate-400">
+        <span>Prioritas 10 Keyword Pertama</span>
+        <span>•</span>
+        <span>Kualitas 4K / RAW</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Multi-source database structure: Source A, Source B, Source C
+    // (Preserve data intact)
+    const multiSourceData = {
+      sourceA: {
+        name: "Sumber Data A: Adobe Artist Hub & Creative Trends Forecast",
+        description: "Menampilkan tren resmi dari kurasi Adobe Visual Trends, Artist Hub, dan tema yang dipromosikan di homepage Adobe Stock.",
+        foto: [
+          {
+            rank: 1,
+            strikeDays: 14,
+            rankShift: 2, // +2
+            title: "AI Integration in Healthcare & Diagnostics",
+            category: "Medical & Tech",
+            type: "Breakout",
+            demandScore: 98,
+            competition: "Sedang",
+            buyerIntent: "Rumah sakit, SaaS rekam medis, asuransi, annual report kesehatan",
+            whyItSells: "Permintaan visual dokter berinteraksi dengan tablet/layar AI diagnostik tanpa terlihat sci-fi murahan. Estetika bersih dan higienis.",
+            keywords: ["ai healthcare", "doctor tablet", "digital medicine", "diagnostics", "radiology ai", "future hospital", "medical technology", "telemedicine", "data analytics", "clinical research"],
+            suggestedRatio: "16:9 Landscape / RAW",
+            prompt: "Professional female doctor in modern clean clinic holding an illuminated digital tablet displaying AI diagnostic data, cinematic warm lighting, realistic human expressions, hyperrealistic, shallow depth of field, 8k resolution.",
+            adobeQuery: "ai healthcare doctor tablet",
+          },
+          {
+            rank: 2,
+            strikeDays: 21,
+            rankShift: 0, // Sama
+            title: "Authentic Multi-Generational Remote Work",
+            category: "Business & Lifestyle",
+            type: "Evergreen",
+            demandScore: 94,
+            competition: "Tinggi",
+            buyerIntent: "Bank digital, platform remote HR, software kolaborasi",
+            whyItSells: "Pembeli menghindari foto kantor kaku. Mereka mencari momen realistis orang bekerja dari rumah dengan cahaya natural lembut.",
+            keywords: ["remote work", "work from home", "father laptop", "authentic lifestyle", "freelance", "modern living room", "parenting multitasking", "ergonomic home office", "cozy lifestyle", "video call"],
+            suggestedRatio: "3:2 / 4:5",
+            prompt: "A middle-aged man smiling at laptop while working from a bright Scandinavian home office, soft window sunlight, natural messy desk, authentic candid photography, shot on 35mm lens.",
+            adobeQuery: "authentic remote work home office",
+          },
+          {
+            rank: 3,
+            strikeDays: 8,
+            rankShift: 3, // +3
+            title: "Renewable Clean Energy & Solar Field Technician",
+            category: "Industrial & ESG",
+            type: "Evergreen",
+            demandScore: 92,
+            competition: "Rendah",
+            buyerIntent: "Laporan ESG korporat, kementerian energi, investor green bonds",
+            whyItSells: "Regulasi sustainability global mewajibkan jutaan perusahaan mempublikasikan ESG report tiap kuartal.",
+            keywords: ["solar panels", "clean energy", "wind turbine", "solar engineer", "green economy", "sustainability", "renewable energy", "esg report", "future power", "technician inspection"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Professional solar technician wearing safety helmet inspecting huge solar panel farm at sunset, dramatic golden hour sky, wide lens, ultra detailed, industrial photography.",
+            adobeQuery: "solar panel inspection engineer",
+          },
+          {
+            rank: 4,
+            strikeDays: 5,
+            rankShift: -1, // -1
+            title: "Cybersecurity & Biometric Identity Protection",
+            category: "Technology",
+            type: "Breakout",
+            demandScore: 95,
+            competition: "Sedang",
+            buyerIntent: "Fintech perbankan, IT security company, cloud platform",
+            whyItSells: "Visual keamanan data modern dengan pencahayaan neon/server room bersih yang elegan.",
+            keywords: ["cybersecurity", "data privacy", "cloud security", "firewall", "biometric scan", "server room", "digital encryption", "network defense", "secure access", "fingerprint scanner"],
+            suggestedRatio: "16:9 Horizontal",
+            prompt: "Modern dark server room with glowing blue and violet LED fiber optic cables, abstract digital lock overlay, ultra sharp, high tech aesthetic, editorial clean lighting.",
+            adobeQuery: "cybersecurity data protection modern",
+          },
+          {
+            rank: 5,
+            strikeDays: 28,
+            rankShift: 1, // +1
+            title: "Minimalist Cosmetic & Sustainable Packaging Mockup",
+            category: "eCommerce & Design",
+            type: "Evergreen",
+            demandScore: 89,
+            competition: "Tinggi",
+            buyerIntent: "Brand skincare, desainer kemasan, mockup presentasi portofolio",
+            whyItSells: "Foto produk kosmetik tanpa label dengan podium batu travertin dan bayangan tanaman. Ruang kosong (negative space) luas sangat disukai desainer.",
+            keywords: ["cosmetic mockup", "blank bottle", "skincare pump", "organic packaging", "minimalist stone podium", "clean beauty", "empty label", "dropper bottle", "natural light", "spa aesthetic"],
+            suggestedRatio: "1:1 / 4:5",
+            prompt: "Unbranded frosted amber dropper bottle on rough beige travertine stone podium, soft rippling water reflection, botanical shadows, minimalist luxury skincare advertisement photography.",
+            adobeQuery: "blank cosmetic bottle stone mockup",
+          },
+          {
+            rank: 6,
+            strikeDays: 12,
+            rankShift: -2, // -2
+            title: "Mindfulness, Breathwork & Mental Detox",
+            category: "Wellness & Health",
+            type: "Breakout",
+            demandScore: 88,
+            competition: "Rendah",
+            buyerIntent: "Aplikasi meditasi, HR wellness program, asuransi kesehatan",
+            whyItSells: "Pergeseran fokus perusahaan ke pencegahan burnout karyawan. Kebutuhan foto journaling dan relaksasi pagi melonjak.",
+            keywords: ["mental wellness", "mindfulness", "journaling", "digital detox", "stress relief", "breathing exercise", "self care", "indoor plants", "peaceful morning", "calm lifestyle"],
+            suggestedRatio: "4:5 / 16:9",
+            prompt: "Young person sitting peacefully on wooden floor near sunlit window, holding ceramic mug, journal notebook nearby, peaceful serene morning atmosphere, soft muted tones.",
+            adobeQuery: "mindfulness mental wellness journaling",
+          },
+          {
+            rank: 7,
+            strikeDays: 19,
+            rankShift: 0,
+            title: "Senior Citizens Active in Mobile Banking",
+            category: "Finance & Demographic",
+            type: "Breakout",
+            demandScore: 92,
+            competition: "Sangat Rendah",
+            buyerIntent: "Bank pensiun, app e-wallet, edukasi inklusi digital",
+            whyItSells: "Pasar jenuh foto lansia sakit. Pembeli membutuhkan visual lansia sehat, percaya diri, dan mahir menggunakan smartphone.",
+            keywords: ["senior mobile banking", "active elderly", "grandparent smartphone", "digital inclusion", "financial literacy", "happy retired couple", "online shopping", "modern senior", "pension app", "technology adoption"],
+            suggestedRatio: "3:2 Landscape",
+            prompt: "Energetic smiling elderly couple sitting in modern cafe happily using smartphone for online contactless payment, vibrant natural daylight, authentic joyful lifestyle.",
+            adobeQuery: "active senior citizen using smartphone banking",
+          },
+          {
+            rank: 8,
+            strikeDays: 3,
+            rankShift: 4, // +4 (Top Gainer)
+            title: "Modern Smart Greenhouse & Vertical Agriculture",
+            category: "Agriculture & Tech",
+            type: "Seasonal",
+            demandScore: 87,
+            competition: "Sedang",
+            buyerIntent: "Start-up agritech, majalah agrikultur, brosur investasi pangan",
+            whyItSells: "Greenhouse hidroponik vertikal modern dengan lampu LED spektrum ungu dan petani muda memegang tablet monitor sensor.",
+            keywords: ["vertical farming", "smart agriculture", "hydroponics", "agrotech", "farmer tablet", "indoor greenhouse", "led grow lights", "sustainable food", "modern farming", "organic vegetables"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Young agricultural engineer in high-tech vertical farm checking crisp green lettuce rows under purple LED grow lights, holding digital clipboard, high key lighting, crisp details.",
+            adobeQuery: "hydroponic vertical farming agritech tablet",
+          },
+          {
+            rank: 9,
+            strikeDays: 16,
+            rankShift: -1,
+            title: "Electric Vehicle (EV) Rapid Charging at Sunset",
+            category: "Automotive & Urban",
+            type: "Evergreen",
+            demandScore: 93,
+            competition: "Sedang",
+            buyerIntent: "Produsen otomotif, pengelola mall, utilitas listrik",
+            whyItSells: "Transisi masif ke kendaraan listrik. Visual pengemudi menancapkan kabel charger cepat selalu laris sepanjang tahun.",
+            keywords: ["ev charging", "electric vehicle", "charging station", "clean transportation", "urban mobility", "plugging in car", "modern electric car", "green energy commute", "future city", "sustainability"],
+            suggestedRatio: "16:9 Horizontal",
+            prompt: "Close up of person plugging heavy duty rapid EV charging cable into sleek modern electric vehicle, futuristic blue LED halo ring on charger, clean urban setting at dusk.",
+            adobeQuery: "electric vehicle charging station urban",
+          },
+          {
+            rank: 10,
+            strikeDays: 2,
+            rankShift: "new", // New Entry
+            title: "Holiday Gift Delivery on Porch Doorstep",
+            category: "Retail & Seasonal",
+            type: "Seasonal",
+            demandScore: 90,
+            competition: "Tinggi",
+            buyerIntent: "E-commerce banner, promosi kurir logistik, kampanye belanja",
+            whyItSells: "Kurir mengantarkan paket dengan pita merah ke depan pintu rumah modern. Aset musiman bernilai tinggi menjelang kampanye festival.",
+            keywords: ["holiday delivery", "courier parcel", "doorstep delivery", "festive shopping", "online shopping boxes", "gift delivery", "cardboard parcel", "express courier", "happy customer", "winter shopping"],
+            suggestedRatio: "3:2 / 1:1",
+            prompt: "Smiling friendly courier handing gift parcel box with red ribbon to customer at front door of welcoming home, warm porch lighting, festive holiday mood, crisp commercial lighting.",
+            adobeQuery: "doorstep delivery courier parcel gift",
+          }
+        ],
+        image: [
+          {
+            rank: 1,
+            strikeDays: 18,
+            rankShift: 1,
+            title: "Isometric 3D AI Data Infrastructure & Cloud Icons",
+            category: "Illustration & 3D",
+            type: "Breakout",
+            demandScore: 97,
+            competition: "Sedang",
+            buyerIntent: "Landing page SaaS, presentasi pitch deck investor, diagram infografis",
+            whyItSells: "Elemen vektor 3D isometric berupa server mini, robot neural network, dan chip AI warna pastel futuristik selalu dibeli tim UI/UX desainer.",
+            keywords: ["isometric cloud", "3d ai icon", "data center illustration", "machine learning vector", "neural network graphic", "futuristic server", "cloud storage glyph", "tech landing page", "saas assets", "vector server rack"],
+            suggestedRatio: "16:9 & EPS/SVG",
+            prompt: "Isometric 3D vector illustration of futuristic cloud data infrastructure, cute clean rendered server towers with glowing neon fiber lines, floating neural network node, matte clay texture.",
+            adobeQuery: "isometric cloud data 3d vector ai",
+          },
+          {
+            rank: 2,
+            strikeDays: 24,
+            rankShift: 0,
+            title: "Fluid Gradient Abstract Holographic Shapes & Wallpapers",
+            category: "Backgrounds & Textures",
+            type: "Evergreen",
+            demandScore: 95,
+            competition: "Tinggi",
+            buyerIntent: "Poster musik, backdrop festival, packaging kosmetik, cover e-book",
+            whyItSells: "Latar belakang gradasi cairan holografik multi-warna dengan butiran grain halus sangat disukai agensi kreatif sebagai background serbaguna.",
+            keywords: ["holographic gradient", "fluid liquid wave", "grainy mesh texture", "abstract background", "vibrant pastel aura", "modern poster backdrop", "gradient blur", "psychedelic colors", "trendy wallpaper", "vector wave"],
+            suggestedRatio: "16:9 & 9:16 (High-Res Vector)",
+            prompt: "Abstract fluid holographic 3D liquid waves background, vibrant iridescent gradient purple coral lime chrome, trendy frosted glass effect, fine film grain texture, vector art.",
+            adobeQuery: "holographic fluid gradient vector background",
+          },
+          {
+            rank: 3,
+            strikeDays: 11,
+            rankShift: 2,
+            title: "Corporate ESG & Carbon Footprint Infographic Kit",
+            category: "Infographics & Business",
+            type: "Evergreen",
+            demandScore: 91,
+            competition: "Rendah",
+            buyerIntent: "Brosur laporan tahunan korporat, konsultan audit lingkungan",
+            whyItSells: "Set diagram vektor lengkap: icon jejak karbon, chart emisi nol bersih (net-zero), dan flow chart daur ulang sampah siap edit.",
+            keywords: ["esg infographic", "carbon footprint diagram", "net zero chart", "sustainability vector icon", "green energy report", "eco friendly symbols", "corporate governance", "environmental chart", "clean power vector", "recycle icons"],
+            suggestedRatio: "16:9 Vector Template (EPS, AI)",
+            prompt: "Clean flat corporate infographic elements vector kit for ESG sustainability report, green and teal modern palette, pie charts, recycle leaf icons, progress bar diagrams.",
+            adobeQuery: "esg sustainability infographic vector template",
+          },
+          {
+            rank: 4,
+            strikeDays: 9,
+            rankShift: -1,
+            title: "Retro 70s-80s Groovy Y2K Cyber Badges & Stickers",
+            category: "Graphic Design Trends",
+            type: "Breakout",
+            demandScore: 89,
+            competition: "Sedang",
+            buyerIntent: "Streetwear brand, merchandise sablon, thumbnail YouTube, stiker sosial media",
+            whyItSells: "Desain vektor retro stiker bunga groovy, smileys, starburst, dan tipografi Y2K sedang menjadi tren utama desainer muda pembeli mikrostock.",
+            keywords: ["y2k stickers", "retro 70s badges", "groovy flower vector", "cyber acid aesthetic", "streetwear graphics", "vintage typography stamps", "pop art badges", "retro smileys", "starburst vector", "nostalgia decals"],
+            suggestedRatio: "Set Vektor Lembaran (EPS/SVG)",
+            prompt: "Set of trendy Y2K retro groovy sticker vector badges, smiling daisy flower, chrome starburst, acid graphics, bold typography, pastel vibrant colors on white background.",
+            adobeQuery: "retro y2k groovy sticker badges vector",
+          },
+          {
+            rank: 5,
+            strikeDays: 15,
+            rankShift: 0,
+            title: "FinTech & E-Wallet Mobile App UI Wireframe Kit",
+            category: "UI/UX & Web Design",
+            type: "Evergreen",
+            demandScore: 90,
+            competition: "Tinggi",
+            buyerIntent: "Desainer Figma, agensi pembuatan web, startup fintech",
+            whyItSells: "Komponen antarmuka vektor (kartu debit digital, grafik spending, list transaksi, tombol transfer) yang mudah diadaptasi ke mock-up aplikasi.",
+            keywords: ["fintech ui kit", "mobile banking wireframe", "credit card mockup", "e-wallet dashboard", "banking app screens", "vector ui elements", "digital transaction flow", "crypto dashboard", "clean ui components", "app template vector"],
+            suggestedRatio: "Vektor Layout Mobile (AI, SVG)",
+            prompt: "Clean modern vector UI kit for mobile banking app, dark mode aesthetic, virtual credit cards, transaction charts, crypto wallet components, pixel perfect vector layout.",
+            adobeQuery: "mobile banking ui kit vector app",
+          },
+          {
+            rank: 6,
+            strikeDays: 7,
+            rankShift: 1,
+            title: "Botanical Line Art & Terracotta Earthy Boho Prints",
+            category: "Home Decor & Art",
+            type: "Evergreen",
+            demandScore: 86,
+            competition: "Tinggi",
+            buyerIntent: "Pencetak poster dinding (wall art print-on-demand), desainer interior",
+            whyItSells: "Garis minimalis daun palem monstera dan siluet vas keramik dengan palet warna terakota hangat. Tetap menjadi favorit untuk dekorasi rumah.",
+            keywords: ["boho botanical line art", "terracotta wall art", "minimalist plant vector", "earthy ceramic silhouette", "abstract arches", "monstera leaf outline", "modern continuous line", "aesthetic beige poster", "gallery wall print", "interior art vector"],
+            suggestedRatio: "3:4 & 4:5 Poster Vector",
+            prompt: "Minimalist continuous line art vector of tropical leaves and ceramic vase with abstract terracotta organic watercolor shapes, warm beige paper texture, chic boho aesthetic.",
+            adobeQuery: "boho botanical line art terracotta vector",
+          },
+          {
+            rank: 7,
+            strikeDays: 4,
+            rankShift: 3,
+            title: "Generative AI Cybernetic Robotic Animals & Mascots",
+            category: "Sci-Fi & Character",
+            type: "Breakout",
+            demandScore: 93,
+            competition: "Rendah",
+            buyerIntent: "Brand e-sports gaming, produk teknologi AI, packaging aksesoris gadget",
+            whyItSells: "Vektor ilustrasi hewan mecha berteknologi tinggi (singa cyber, elang mecha) dengan armor metalik dan aksen neon tajam.",
+            keywords: ["cybernetic animal", "mecha mascot", "robot eagle vector", "cyberpunk logo", "esports mascot gaming", "futuristic robotic beast", "neon armor illustration", "vector robot beast", "sci fi creature", "high tech character"],
+            suggestedRatio: "1:1 / SVG Vektor",
+            prompt: "Futuristic cybernetic robotic tiger mascot vector logo, detailed mechanical armor plates, glowing cyan laser eyes, sharp angular edges, metallic finish, dark background.",
+            adobeQuery: "cybernetic mecha robot animal vector logo",
+          },
+          {
+            rank: 8,
+            strikeDays: 22,
+            rankShift: -2,
+            title: "Global Supply Chain & Logistics Flat Vector Icons",
+            category: "Business & Trade",
+            type: "Evergreen",
+            demandScore: 88,
+            competition: "Sedang",
+            buyerIntent: "Perusahaan ekspedisi, pelabuhan kargo, platform ERP gudang",
+            whyItSells: "Set ikon vektor presisi kapal kontainer, drone pengantar, truk kargo, forklift, dan barcode paket. Sangat sering diunduh berkali-kali oleh desainer web korporat.",
+            keywords: ["logistics icons vector", "supply chain symbols", "cargo ship vector", "forklift icon", "drone delivery glyph", "freight transport", "warehouse package", "customs clearance", "tracking map icon", "shipping flat vector"],
+            suggestedRatio: "Icon Grid (SVG/EPS)",
+            prompt: "Flat color modern vector icon set for international logistics and supply chain, cargo container vessel, airplane, delivery van, barcode scanner, clean corporate outline style.",
+            adobeQuery: "logistics cargo supply chain vector icons",
+          },
+          {
+            rank: 9,
+            strikeDays: 1,
+            rankShift: "new",
+            title: "Paper Cut Craft Style Folk Christmas & Holiday Vector",
+            category: "Holiday & Craft",
+            type: "Seasonal",
+            demandScore: 92,
+            competition: "Sedang",
+            buyerIntent: "Kartu ucapan natal perusahaan, wrapping paper, kalender akhir tahun",
+            whyItSells: "Gaya seni kertas bertumpuk (paper-cut 3D look) dengan tema pohon pinus bersalju, rusa kutub, dan rumah kayu bernuansa hangat.",
+            keywords: ["paper cut christmas", "paper craft winter", "vector holiday card", "layered papercut forest", "reindeer snow village", "warm festive craft", "xmas greeting template", "papercut illustration", "nordic winter vector", "3d paper cut vector"],
+            suggestedRatio: "16:9 & 1:1 Vector",
+            prompt: "Layered 3D paper cut craft illustration of magical snowy winter village with fir trees, reindeer, and glowing cozy cabins, soft realistic paper drop shadows, warm festive aesthetic.",
+            adobeQuery: "paper cut christmas winter vector craft",
+          },
+          {
+            rank: 10,
+            strikeDays: 6,
+            rankShift: -1,
+            title: "Mental Health Wellness Empathy Vector Characters",
+            category: "Social & Emotion",
+            type: "Breakout",
+            demandScore: 85,
+            competition: "Rendah",
+            buyerIntent: "Platform konseling online, artikel psikologi, kampanye kesehatan mental",
+            whyItSells: "Karakter orang berpelukan, mendengarkan dengan hangat, dan merawat tanaman dengan gaya ilustrasi editorial kontemporer bergaris organik.",
+            keywords: ["mental health vector", "empathy characters", "support group illustration", "psychology flat art", "listening friend", "self care cartoon", "comforting embrace", "wellness editorial art", "healing therapy", "kindness vector"],
+            suggestedRatio: "16:9 Editorial Vector",
+            prompt: "Modern editorial vector illustration of diverse people supporting each other with empathy, comforting hug, warm pastel color palette, minimalist organic shapes, clean lines.",
+            adobeQuery: "mental health empathy support vector illustration",
+          }
+        ],
+        video: [
+          {
+            rank: 1,
+            strikeDays: 25,
+            rankShift: 0,
+            title: "Vertical POV: Mobile Contactless QRIS Payment at Cafe",
+            category: "Finance & Mobile",
+            type: "Breakout",
+            demandScore: 99,
+            competition: "Sedang",
+            buyerIntent: "Iklan TikTok/Reels perbankan, campaign e-wallet global",
+            whyItSells: "Footage vertikal (9:16) format POV tangan memegang smartphone dan memindai barcode transaksi cepat di kafe modern. Format iklan paling diburu.",
+            keywords: ["mobile payment pov", "vertical video 9:16", "contactless payment", "qris tap", "pos terminal cafe", "nfc payment", "smartphone screen", "cashless society", "reels ads", "b-roll finance"],
+            suggestedRatio: "9:16 Vertical (4K/60fps)",
+            prompt: "First person POV vertical video, hand tapping modern smartphone to clean black POS terminal on wooden cafe counter, green success checkmark glow on screen, smooth camera motion, 60fps.",
+            adobeQuery: "vertical pov mobile contactless payment",
+          },
+          {
+            rank: 2,
+            strikeDays: 17,
+            rankShift: 1,
+            title: "Cinematic Drone 4K: Offshore Wind Turbines in Sunrise Fog",
+            category: "Energy & Cinematic",
+            type: "Evergreen",
+            demandScore: 96,
+            competition: "Sedang",
+            buyerIntent: "Company profile multinasional, presentasi keynote energi, iklan TV",
+            whyItSells: "Pergerakan kamera drone mulus 24fps melewati deretan kincir angin saat kabut pagi terbelah sinar matahari emas.",
+            keywords: ["wind turbine drone", "4k footage 60fps", "renewable energy b-roll", "morning fog landscape", "cinematic slow pan", "esg keynote background", "green power", "wind farm", "aerial photography", "environmental documentary"],
+            suggestedRatio: "16:9 Landscape (4K 3840x2160)",
+            prompt: "Cinematic 4K drone shot flying smoothly over towering white wind turbines standing above gentle rolling clouds and morning mist, dramatic sunrise rays, ultra steady gimbal motion.",
+            adobeQuery: "drone 4k wind turbine sunrise",
+          },
+          {
+            rank: 3,
+            strikeDays: 10,
+            rankShift: 2,
+            title: "Extreme Macro: Robotic Arm Solder AI Semiconductor Chip",
+            category: "Industrial & AI",
+            type: "Breakout",
+            demandScore: 94,
+            competition: "Rendah",
+            buyerIntent: "Perusahaan chip AI, media teknologi, presentasi hardware",
+            whyItSells: "Macro slow-motion pergerakan presisi lengan robot memasang mikrochip di papan sirkuit PCB dengan aksen cahaya laser presisi.",
+            keywords: ["robotic arm smt", "circuit board assembly", "microchip manufacturing", "macro 4k slow motion", "factory automation", "robotics technology", "electronics production", "ai hardware chip", "industrial b-roll", "precision engineering"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Extreme macro 4k slow motion footage of robotic needle mounting tiny microchip onto intricate green PCB circuit board, subtle blue industrial lighting, pin-sharp focus pull.",
+            adobeQuery: "macro robotic arm circuit board assembly 4k",
+          },
+          {
+            rank: 4,
+            strikeDays: 13,
+            rankShift: -1,
+            title: "Diverse Creative Team Brainstorming in Loft Studio",
+            category: "Business & Agency",
+            type: "Evergreen",
+            demandScore: 92,
+            competition: "Tinggi",
+            buyerIntent: "SaaS remote kerja, video perekrutan HR korporat",
+            whyItSells: "Tim multikultural berdiskusi di depan papan kaca sticky notes dengan tawa alami tanpa terkesan akting canggung.",
+            keywords: ["creative meeting", "diverse colleagues", "brainstorming sticky notes", "glass board discussion", "modern agency", "teamwork collaboration", "smiling professionals", "startup culture", "office b-roll", "design sprint"],
+            suggestedRatio: "16:9 4K & 9:16 Cut",
+            prompt: "Handheld cinematic shot of diverse group of young architects and creatives smiling and discussing design sketches on glass board in sunlit industrial loft office, shallow depth of field.",
+            adobeQuery: "diverse creative team brainstorming meeting 4k",
+          },
+          {
+            rank: 5,
+            strikeDays: 30,
+            rankShift: 0,
+            title: "Night Timelapse: Urban Traffic Light Trails Through Skyscrapers",
+            category: "City & Abstract",
+            type: "Evergreen",
+            demandScore: 89,
+            competition: "Tinggi",
+            buyerIntent: "Transisi video berita, intro vlog bisnis, background website",
+            whyItSells: "Timelapse lalu lintas kota metropolitan dengan jejak cahaya mobil panjang (light streaks) selalu menjadi aset serbaguna yang dicari editor.",
+            keywords: ["city timelapse", "traffic light trails", "night metropolis", "urban transit 4k", "fast motion highway", "skyscraper skyline", "motion blur traffic", "city nightlife", "busy crossroads", "telecom background"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "High angle nighttime timelapse overlooking dense metropolitan highway intersection with glowing streaks of red and white car headlights flowing between futuristic illuminated skyscrapers.",
+            adobeQuery: "night city timelapse traffic light trails 4k",
+          },
+          {
+            rank: 6,
+            strikeDays: 15,
+            rankShift: 1,
+            title: "120fps Slow Motion: Steamed Milk Pouring Rosetta Latte Art",
+            category: "Food & Beverage",
+            type: "Evergreen",
+            demandScore: 91,
+            competition: "Sedang",
+            buyerIntent: "Restoran, waralaba kafe, iklan mesin espresso",
+            whyItSells: "Gerakan sangat lambat 120fps penuangan susu hangat membentuk pola rosetta di atas crema kopi kental dengan pencahayaan kafe hangat.",
+            keywords: ["latte art pour", "barista slow motion 120fps", "steamed milk pitcher", "espresso crema", "specialty coffee cafe", "morning ritual", "coffee shop ambiance", "warm cinematic food", "macro food video", "beverage b-roll"],
+            suggestedRatio: "16:9 4K / 9:16 Reels",
+            prompt: "Close up 120fps slow motion of skilled barista pouring silky steamed milk into ceramic cup creating intricate rosetta latte art pattern, warm cozy cafe background bokeh.",
+            adobeQuery: "barista latte art pouring slow motion 4k",
+          },
+          {
+            rank: 7,
+            strikeDays: 7,
+            rankShift: 3,
+            title: "Rack Focus: Cyber Security Breach Red Alert on Terminal Screen",
+            category: "Technology",
+            type: "Breakout",
+            demandScore: 95,
+            competition: "Sedang",
+            buyerIntent: "Berita siber, video training keamanan data IT, webinar devops",
+            whyItSells: "Perpindahan fokus tajam dari barisan kode hijau ke grafik peringatan merah darurat 'INTRUSION DETECTED' dengan visual UI realistis.",
+            keywords: ["cyber attack alert", "terminal hacker code", "access denied screen", "network breach", "data center monitor", "red warning ui", "software engineering", "cybersecurity emergency", "threat intelligence", "glitch visual"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Rack focus shot of high-tech programmer screen rapidly cycling command lines then triggering pulsing red 'Security Alert: Intrusion Detected' graphic, dark room ambient glow.",
+            adobeQuery: "cybersecurity warning alert screen footage 4k",
+          },
+          {
+            rank: 8,
+            strikeDays: 9,
+            rankShift: -2,
+            title: "Runner Smartwatch Biometrics Tracking Outdoor Sunrise",
+            category: "Fitness & Wearables",
+            type: "Breakout",
+            demandScore: 90,
+            competition: "Sedang",
+            buyerIntent: "Brand smartwatch, asuransi kesehatan, app pelacak jarak lari",
+            whyItSells: "Kamera tracking mengikuti pelari di trek outdoor pagi hari, lalu zoom fokus ke layar jam yang menampilkan detak jantung (BPM).",
+            keywords: ["smartwatch heart rate", "runner tracking", "morning jogger athlete", "biometric monitoring", "outdoor fitness workout", "wearable tech", "calories burn metric", "running shoes pavement", "athletic motivation", "health app b-roll"],
+            suggestedRatio: "9:16 Vertical & 16:9",
+            prompt: "Tracking shot of athletic runner stopping to tap glowing interface of sleek digital smartwatch showing rising heart rate pulse, outdoor sunrise running track, lens flare.",
+            adobeQuery: "smartwatch heart rate runner workout 4k",
+          },
+          {
+            rank: 9,
+            strikeDays: 19,
+            rankShift: 0,
+            title: "Autonomous Mobile Robots (AMR) Sorting Warehouse Cargo",
+            category: "Logistics & Tech",
+            type: "Evergreen",
+            demandScore: 93,
+            competition: "Rendah",
+            buyerIntent: "E-commerce besar, software rantai pasok, presentasi industri 4.0",
+            whyItSells: "Kamera gimbal bergerak mulus memperlihatkan robot AGV otomatis meluncur membawa rak barang di gudang berlantai mengkilap tanpa manusia.",
+            keywords: ["warehouse robotics", "agv autonomous robot", "fulfillment center 4k", "smart logistics", "automated package sorting", "e-commerce warehouse", "supply chain tech", "industrial robotics", "inventory management", "modern depot"],
+            suggestedRatio: "16:9 4K",
+            prompt: "Smooth slider gimbal shot inside vast high-ceiling distribution warehouse with autonomous mobile robots (AMR) carrying merchandise pallets across glossy concrete floor, high key lighting.",
+            adobeQuery: "automated warehouse robots agv 4k",
+          },
+          {
+            rank: 10,
+            strikeDays: 4,
+            rankShift: -3,
+            title: "Zero Waste Organic Grocery Shopper with Cotton Mesh Bag",
+            category: "Eco Living & Food",
+            type: "Seasonal",
+            demandScore: 88,
+            competition: "Sedang",
+            buyerIntent: "Supermarket ramah lingkungan, kampanye kurangi plastik",
+            whyItSells: "Tangan memasukkan buah segar ke dalam tas jaring kanvas ramah lingkungan di stan buah rustic kayu dengan cahaya matahari pagi hangat.",
+            keywords: ["zero waste shopping", "cotton mesh produce bag", "reusable grocery", "organic supermarket", "sustainable lifestyle", "plastic free consumer", "eco conscious", "fresh apples produce", "green consumerism", "aesthetic grocery"],
+            suggestedRatio: "4:5 & 16:9 4K",
+            prompt: "Close up aesthetic shot of shopper placing organic crisp red apples into reusable cotton mesh produce bag at rustic wooden grocery display, warm daylight, plastic free theme.",
+            adobeQuery: "zero waste reusable mesh bag grocery 4k",
+          }
+        ]
+      },
+      sourceB: {
+        name: "Sumber Data B: Adobe Stock Best-Selling & Downloads Query",
+        description: "Berdasarkan query pencarian internal Adobe Stock dengan parameter order=nb_downloads (paling laris diunduh pembeli) dalam kurun waktu 30 hari terakhir.",
+        foto: [
+          {
+            rank: 1,
+            strikeDays: 26,
+            rankShift: 0,
+            title: "Asian & Diverse Medical Professionals in Consultation Room",
+            category: "Medical & Diversity",
+            type: "Evergreen",
+            demandScore: 98,
+            competition: "Tinggi",
+            buyerIntent: "Rumah sakit swasta, polis asuransi jiwa, brosur kesehatan",
+            whyItSells: "Foto dokter wanita Asia tersenyum ramah mendengarkan pasien keluarga di ruang praktek modern yang terang dan hangat.",
+            keywords: ["asian doctor", "female physician", "hospital consultation", "patient care", "medical clinic", "healthcare diversity", "compassionate doctor", "stethoscope", "clinic appointment", "medical insurance"],
+            suggestedRatio: "3:2 Landscape",
+            prompt: "Authentic shot of friendly Asian female doctor in white coat talking warmly with patient in bright sunlit modern medical consultation room, authentic smile.",
+            adobeQuery: "asian female doctor consultation patient hospital",
+          },
+          {
+            rank: 2,
+            strikeDays: 14,
+            rankShift: 2,
+            title: "Financial Data Analyst Working Late with Multi-Monitors",
+            category: "Finance & Corporate",
+            type: "Breakout",
+            demandScore: 95,
+            competition: "Sedang",
+            buyerIntent: "Platform trading saham, crypto exchange, software akuntansi korporat",
+            whyItSells: "Suasana kerja malam hari dengan candlestick chart hijau-merah menyinari wajah analis finansial yang sedang fokus.",
+            keywords: ["financial analyst", "stock trader", "candlestick charts", "multi monitor setup", "market analysis", "crypto trading", "office overtime", "fintech data", "investment banking", "trading desk"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Focused young financial analyst looking at multiple monitors filled with green and red stock market candlestick charts in modern dimly lit corporate office at night.",
+            adobeQuery: "financial analyst stock chart screens night",
+          },
+          {
+            rank: 3,
+            strikeDays: 18,
+            rankShift: -1,
+            title: "Modern Electric Bus & Public Transit Commuters in Smart City",
+            category: "Urban Transportation",
+            type: "Evergreen",
+            demandScore: 91,
+            competition: "Rendah",
+            buyerIntent: "Dinas perhubungan, developer kota mandiri, pabrikan bus listrik",
+            whyItSells: "Penumpang ramah menaiki bus listrik berlantai rendah di halte modern dengan pohon rindang kota hijau.",
+            keywords: ["electric bus", "public transit", "smart city commute", "clean transportation", "zero emission bus", "commuters boarding", "urban mobility", "modern bus stop", "sustainable city", "green transit"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Sleek modern zero-emission electric bus stopping at clean futuristic glass bus station in sunlit green eco-city, diverse commuters stepping inside.",
+            adobeQuery: "electric bus public transit smart city",
+          },
+          {
+            rank: 4,
+            strikeDays: 22,
+            rankShift: 1,
+            title: "Authentic Small Business Owner Smiling at Bakery Counter",
+            category: "Small Business & Retail",
+            type: "Evergreen",
+            demandScore: 93,
+            competition: "Tinggi",
+            buyerIntent: "Aplikasi POS kasir, bank pinjaman UMKM, e-commerce lokal",
+            whyItSells: "Pemilik usaha toko roti artisan mengenakan celemek menyilangkan tangan dengan senyum bangga di depan etalase roti sourdough.",
+            keywords: ["small business owner", "artisan baker", "bakery counter", "local entrepreneur", "sourdough bread display", "proud shopkeeper", "coffee shop owner", "pos system", "warm retail lighting", "retail entrepreneur"],
+            suggestedRatio: "3:2 / 4:5",
+            prompt: "Authentic portrait of smiling artisanal female baker with apron standing proudly behind rustic wooden bakery display filled with fresh sourdough loaves, morning light.",
+            adobeQuery: "small business owner bakery counter artisan",
+          },
+          {
+            rank: 5,
+            strikeDays: 8,
+            rankShift: 3,
+            title: "Gen-Z Content Creator Podcasting in Acoustic Studio",
+            category: "Media & Creator Economy",
+            type: "Breakout",
+            demandScore: 94,
+            competition: "Sedang",
+            buyerIntent: "Brand mikrofon, platform streaming podcast, agensi influencer",
+            whyItSells: "Pencahayaan RGB neon hangat dengan mikrofon studio kondensor Shure SM7B style dan headphone monitor.",
+            keywords: ["podcast studio", "content creator", "broadcast microphone", "acoustic panels", "gen z streamer", "sound engineering", "recording vocal", "rgb ambient light", "influencer interview", "live streaming"],
+            suggestedRatio: "16:9 / 4:5",
+            prompt: "Young content creator speaking into professional broadcast microphone inside modern cozy acoustic studio, neon backlights, authentic candid expression, shallow focus.",
+            adobeQuery: "content creator podcast microphone studio",
+          },
+          {
+            rank: 6,
+            strikeDays: 12,
+            rankShift: -2,
+            title: "Construction Project Manager with Digital Tablet on Jobsite",
+            category: "Architecture & Industry",
+            type: "Evergreen",
+            demandScore: 89,
+            competition: "Sedang",
+            buyerIntent: "Software konstruksi, kontraktor gedung, perusahaan semen",
+            whyItSells: "Manajer proyek berseragam rompi safety kuning memeriksa denah arsitektur 3D di iPad dengan latar rangka bangunan gedung bertingkat.",
+            keywords: ["construction manager", "tablet digital blueprint", "safety helmet", "building site", "civil engineer", "architecture inspection", "hardhat woman", "structural project", "real estate development", "jobsite b-roll"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Female civil engineer wearing yellow hardhat and high-visibility vest reviewing digital blueprint on tablet at construction skyscraper site, morning blue sky.",
+            adobeQuery: "civil engineer tablet construction hardhat",
+          },
+          {
+            rank: 7,
+            strikeDays: 5,
+            rankShift: 2,
+            title: "Bio-Tech Lab Scientist Pipetting Micro Sample into Vial",
+            category: "Science & Research",
+            type: "Evergreen",
+            demandScore: 92,
+            competition: "Sedang",
+            buyerIntent: "Perusahaan farmasi, universitas riset, laboratorium biologi molekuler",
+            whyItSells: "Kamera close-up memperlihatkan peneliti memakai jas lab dan kacamata pelindung meneteskan cairan reagen biru ke dalam tabung reaksi.",
+            keywords: ["biotech laboratory", "scientist pipetting", "dna research", "molecular biology", "clean room lab", "pipette droplet", "pharmaceutical testing", "scientific experiment", "biochemistry", "medical researcher"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Close up macro of laboratory scientist in goggles and blue gloves carefully using micropipette to drop liquid reagent into microplate vial, clean high-tech lab bokeh.",
+            adobeQuery: "biotech scientist pipette laboratory microplate",
+          },
+          {
+            rank: 8,
+            strikeDays: 16,
+            rankShift: -1,
+            title: "Cozy Autumn / Fall Coffee Mug with Cinnamon and Scarf",
+            category: "Seasonal Lifestyle",
+            type: "Seasonal",
+            demandScore: 88,
+            competition: "Tinggi",
+            buyerIntent: "Blog kuliner, promo musiman kedai kopi, kartu ucapan musim gugur",
+            whyItSells: "Gelas keramik kopi mengepul dengan latar selimut rajut wol, batang kayu manis, dan daun maple jingga berjatuhan.",
+            keywords: ["autumn coffee", "warm fall mug", "knitted scarf blanket", "cinnamon sticks", "dry maple leaves", "cozy hygge mood", "pumpkin spice latte", "rustic wooden table", "seasonal morning", "warm aesthetic coffee"],
+            suggestedRatio: "4:5 / 1:1",
+            prompt: "Top-down cozy view of ceramic coffee cup with steaming foam on rustic wooden table surrounded by golden autumn maple leaves, cinnamon sticks, and warm knit wool scarf.",
+            adobeQuery: "cozy autumn fall coffee cup leaves scarf",
+          },
+          {
+            rank: 9,
+            strikeDays: 2,
+            rankShift: "new",
+            title: "Modern AI Data Center Cooling Pipes and Fiber Cables",
+            category: "AI Infrastructure",
+            type: "Breakout",
+            demandScore: 96,
+            competition: "Rendah",
+            buyerIntent: "Perusahaan cloud AI, saham datacenter REITs, majalah komputasi",
+            whyItSells: "Foto lorong server data center AI dengan pipa pendingin air (liquid cooling) modern dan kabel fiber optik berwarna-warni rapi.",
+            keywords: ["data center liquid cooling", "server racks", "fiber optic cables", "ai compute cluster", "gpu server farm", "blue led glow", "cloud infrastructure", "high performance computing", "server room corridor", "tech hardware"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Symmetrical wide shot down clean modern high-tech data center hallway with liquid cooling pipe systems and glowing violet LED server racks, super sharp depth of field.",
+            adobeQuery: "modern data center liquid cooling server racks",
+          },
+          {
+            rank: 10,
+            strikeDays: 20,
+            rankShift: 0,
+            title: "Father and Daughter Learning Coding on Laptop at Home",
+            category: "Education & Family",
+            type: "Evergreen",
+            demandScore: 87,
+            competition: "Sedang",
+            buyerIntent: "Platform kursus online anak, bimbingan belajar coding (EdTech)",
+            whyItSells: "Ayah tersenyum mendampingi putrinya yang antusias mengetik logika coding scratch di laptop meja ruang tamu.",
+            keywords: ["father daughter coding", "edtech laptop", "stem education", "parent teaching child", "online learning home", "elementary coding", "family bonding tech", "homeschooling", "smiling kid laptop", "creative education"],
+            suggestedRatio: "3:2 Landscape",
+            prompt: "Father sitting happily beside his 8-year-old daughter teaching her computer programming on laptop at bright living room table, warm natural family moment.",
+            adobeQuery: "father teaching daughter coding laptop home",
+          }
+        ],
+        image: [
+          {
+            rank: 1,
+            strikeDays: 23,
+            rankShift: 0,
+            title: "Gradient Cyber Mesh Holographic Grid Vector Background",
+            category: "Vector Backgrounds",
+            type: "Evergreen",
+            demandScore: 97,
+            competition: "Tinggi",
+            buyerIntent: "Landing page startup, latar belakang banner tech conference",
+            whyItSells: "Gelombang jaring perspektif 3D retrofuturistik dengan gradasi ungu-cyan neon yang sangat mudah ditambahkan teks judul oleh desainer.",
+            keywords: ["cyber mesh grid", "perspective wireframe vector", "holographic wave", "neon synthwave background", "tech grid backdrop", "3d wireframe vector", "futuristic landscape", "abstract digital surface", "scifi vector grid", "retro futuristic"],
+            suggestedRatio: "16:9 Vector EPS/AI",
+            prompt: "Futuristic perspective cybernetic wireframe grid terrain vector, flowing neon violet and cyan mesh gradient on dark navy background, minimal tech space, ultra sharp.",
+            adobeQuery: "cyber mesh grid perspective vector neon",
+          },
+          {
+            rank: 2,
+            strikeDays: 19,
+            rankShift: 1,
+            title: "Minimalist Modern Line Art Facial Expressions & Hands",
+            category: "Illustration & Art",
+            type: "Evergreen",
+            demandScore: 92,
+            competition: "Sedang",
+            buyerIntent: "Desain kemasan kosmetik, sablon totebag, cover buku psikologi",
+            whyItSells: "Garis satu goresan (continuous line art) tangan memegang bunga atau profil wajah wanita anggun dengan aksen warna pastel.",
+            keywords: ["continuous line art", "minimalist face vector", "graceful hands flowers", "one line drawing", "aesthetic continuous outline", "boho female profile", "clean single line", "contemporary wall art", "minimalist poster", "chic vector lines"],
+            suggestedRatio: "Vector SVG/EPS",
+            prompt: "Elegant single continuous line art drawing of female profile touching delicate peony flower, terracotta and sage green organic shape accents, minimalist vector art.",
+            adobeQuery: "minimalist continuous line art face hands vector",
+          },
+          {
+            rank: 3,
+            strikeDays: 11,
+            rankShift: 2,
+            title: "E-Commerce Discount Badges, Sale Ribbons & Percent Tags",
+            category: "Retail Marketing",
+            type: "Evergreen",
+            demandScore: 94,
+            competition: "Tinggi",
+            buyerIntent: "Toko online, agensi iklan marketplace, banner promo akhir pekan",
+            whyItSells: "Set vektor label diskon '50% OFF', 'BEST SELLER', 'FLASH SALE' dengan gaya 3D glossy merah dan emas yang siap pakai.",
+            keywords: ["sale badges vector", "discount ribbon tags", "flash sale label", "promotional stickers", "best seller badge", "3d glossy sale tags", "percentage off badge", "black friday sticker", "ecommerce banners", "shopping labels vector"],
+            suggestedRatio: "Icon Set (EPS/SVG)",
+            prompt: "Set of high quality glossy 3D sale discount tags and ribbons, bold modern typography 50% OFF, red and golden metallic accents, clean isolated vector graphics.",
+            adobeQuery: "sale discount badges ribbons tags vector",
+          },
+          {
+            rank: 4,
+            strikeDays: 7,
+            rankShift: -1,
+            title: "Abstract Geometric Bauhaus & Swiss Style Poster Layout",
+            category: "Graphic Design",
+            type: "Breakout",
+            demandScore: 89,
+            competition: "Sedang",
+            buyerIntent: "Poster pameran seni, sampul majalah desain, branding kit arsitek",
+            whyItSells: "Komposisi bentuk dasar lingkaran, setengah lingkaran, dan grid tipografi Bauhaus dengan warna primer (kuning, biru, merah bata).",
+            keywords: ["bauhaus poster vector", "swiss design grid", "geometric abstract shapes", "minimalist modernist vector", "retro constructivism", "primary colors poster", "architectural graphic", "mid century modern print", "bold geometry", "editorial layout vector"],
+            suggestedRatio: "3:4 / 16:9 Vector",
+            prompt: "Bauhaus modernist poster layout vector, geometric clean circles, triangles and grids in bold cobalt blue, mustard yellow and warm terracotta, swiss typographic aesthetic.",
+            adobeQuery: "bauhaus geometric abstract poster vector layout",
+          },
+          {
+            rank: 5,
+            strikeDays: 14,
+            rankShift: 0,
+            title: "Digital Healthcare Telemedicine App Icons & Vector Glyphs",
+            category: "Medical & Icons",
+            type: "Evergreen",
+            demandScore: 90,
+            competition: "Sedang",
+            buyerIntent: "Pengembang aplikasi kesehatan, website dokter online, infografis BPJS/asuransi",
+            whyItSells: "Set ikon vektor stetoskop digital, konsultasi chat dokter, resep obat elektronik, dan rekam medis cloud.",
+            keywords: ["telemedicine icons", "digital health vector", "online doctor consultation", "medical app glyphs", "electronic prescription", "hospital cloud icons", "stethoscope phone vector", "healthcare flat icon", "medical symbols set", "telehealth ui vector"],
+            suggestedRatio: "Vector Icon Set (EPS, SVG)",
+            prompt: "Flat outline vector icon set for telemedicine and online healthcare mobile app, cyan and royal blue color accents, electronic stethoscope, video call doctor, pill bottle.",
+            adobeQuery: "telemedicine online doctor health vector icons",
+          },
+          {
+            rank: 6,
+            strikeDays: 4,
+            rankShift: 4, // Top Gainer
+            title: "Isometric Smart City Sustainable Eco District Vector",
+            category: "Urban & Ecology",
+            type: "Breakout",
+            demandScore: 93,
+            competition: "Rendah",
+            buyerIntent: "Brosur masterplan pengembang properti, presentasi mobilitas hijau",
+            whyItSells: "Ilustrasi isometrik gedung ramah lingkungan dengan kebun di atap, mobil listrik otonom, dan panel surya terintegrasi.",
+            keywords: ["isometric smart city", "green architecture vector", "eco friendly district", "solar building illustration", "urban planning isometric", "sustainable transit vector", "rooftop garden 3d", "electric charging street", "futuristic eco city", "clean energy town"],
+            suggestedRatio: "16:9 Vector EPS/AI",
+            prompt: "Detailed isometric vector illustration of modern sustainable eco-district city block, rooftop trees, solar panel arrays, sleek electric monorail, bright optimistic colors.",
+            adobeQuery: "isometric smart city sustainable eco vector",
+          },
+          {
+            rank: 7,
+            strikeDays: 9,
+            rankShift: -2,
+            title: "Hand-Drawn Organic Food & Farmers Market Badges",
+            category: "Food & Organic",
+            type: "Evergreen",
+            demandScore: 86,
+            competition: "Tinggi",
+            buyerIntent: "Kemasan produk madu, kopi organik, kafe vegan, stiker sayur segar",
+            whyItSells: "Logo cap stempel bertinta kasar dengan ilustrasi gandum, wortel, daun zaitun, dan teks '100% ORGANIC CERTIFIED'.",
+            keywords: ["organic food badges", "farmers market logo", "farm fresh stamp", "hand drawn vegetable emblem", "vintage food label", "olive branch wreath", "100 percent natural vector", "artisan harvest logo", "rustic grocery badge", "eco farm seal"],
+            suggestedRatio: "Badge Sheet (EPS/AI)",
+            prompt: "Vintage hand drawn farm-to-table organic food emblems and badges vector set, rustic wheat stalk, fresh vegetables, grunge stamp texture, earthy green and brown palette.",
+            adobeQuery: "organic food farmers market badges vector",
+          },
+          {
+            rank: 8,
+            strikeDays: 16,
+            rankShift: 1,
+            title: "Cryptocurrency Blockchain & Decentralized Node Network",
+            category: "Cryptocurrency & Web3",
+            type: "Breakout",
+            demandScore: 91,
+            competition: "Sedang",
+            buyerIntent: "Media berita crypto, exchange token, pitch deck startup web3",
+            whyItSells: "Kubus blok transparan bercahaya terhubung rantai data digital emas-biru dalam ruang virtual gelap.",
+            keywords: ["blockchain nodes", "cryptocurrency vector", "decentralized network", "crypto block chain", "smart contracts graphic", "glowing digital tokens", "fintech crypto wallpaper", "distributed ledger vector", "digital coin node", "web3 concept art"],
+            suggestedRatio: "16:9 Vector",
+            prompt: "Glowing 3D vector illustration of decentralized blockchain nodes network, floating transparent glass blocks interconnected with golden laser beams, dark technological background.",
+            adobeQuery: "blockchain network decentralized node vector",
+          },
+          {
+            rank: 9,
+            strikeDays: 1,
+            rankShift: "new",
+            title: "Cute Kawaii Dessert & Boba Tea Character Mascot Stickers",
+            category: "Cute & Stickers",
+            type: "Evergreen",
+            demandScore: 88,
+            competition: "Tinggi",
+            buyerIntent: "Stiker LINE/WhatsApp, casing HP, merchandise alat tulis anak",
+            whyItSells: "Karakter boba milk tea, donat, dan es krim dengan mata bulat tersenyum lucu dan pipi merona menggemaskan.",
+            keywords: ["kawaii boba tea", "cute dessert stickers", "japanese mascot vector", "chibi pastry cartoon", "sweet drink characters", "bubble tea doodle", "cute foodie vectors", "pastry mascot set", "happy donut sticker", "pastel cartoon icons"],
+            suggestedRatio: "Sticker Sheet Vector",
+            prompt: "Adorable set of kawaii food and drink vector sticker illustrations, smiling boba cup, happy strawberry milk carton, cute glazed donut with sparkles, pastel soft colors.",
+            adobeQuery: "kawaii boba tea cute food stickers vector",
+          },
+          {
+            rank: 10,
+            strikeDays: 12,
+            rankShift: -1,
+            title: "Cyberpunk Glitch HUD & Futuristic UI Interface Overlays",
+            category: "Sci-Fi Overlays",
+            type: "Breakout",
+            demandScore: 87,
+            competition: "Sedang",
+            buyerIntent: "Editor video YouTube gaming, thumbnail streamer, poster turnamen",
+            whyItSells: "Elemen HUD bidikan bidik (crosshair), indikator baterai sci-fi, peta radar, dan kode biner dengan efek glitch digital transparan.",
+            keywords: ["hud overlay vector", "cyberpunk ui elements", "sci fi crosshair", "glitch interface", "target reticle vector", "futuristic display graphics", "digital radar ui", "gaming stream overlay", "scifi cockpit elements", "vector hud graphics"],
+            suggestedRatio: "16:9 Vector / Transparent PNG",
+            prompt: "Complex high tech sci-fi HUD interface elements vector set, glowing cyan and amber radar circular meters, digital crosshair reticles, transparent grid overlays.",
+            adobeQuery: "scifi hud cyberpunk ui overlay vector",
+          }
+        ],
+        video: [
+          {
+            rank: 1,
+            strikeDays: 21,
+            rankShift: 1,
+            title: "Customer Tapping Credit Card on Contactless POS Terminal",
+            category: "Retail & Finance",
+            type: "Evergreen",
+            demandScore: 98,
+            competition: "Sedang",
+            buyerIntent: "Bank penerbit kartu kredit, iklan merchant e-wallet, kampanye belanja",
+            whyItSells: "Close-up sudut miring memperlihatkan kartu chip menyentuh layar POS hitam dengan bunyi bip dan lampu hijau menyala cepat.",
+            keywords: ["contactless credit card", "pos terminal payment", "tap to pay 4k", "nfc card reader", "cashless transaction", "checkout counter", "retail store purchase", "finance b-roll 4k", "smart payment device", "card chip payment"],
+            suggestedRatio: "16:9 4K 60fps",
+            prompt: "Crisp 4K close up of modern metallic contactless credit card tapping sleek black electronic payment terminal on light oak boutique counter, bright green approval light flashes.",
+            adobeQuery: "contactless credit card pos payment 4k",
+          },
+          {
+            rank: 2,
+            strikeDays: 14,
+            rankShift: -1,
+            title: "Aerial 4K Tracking: Modern High Speed Bullet Train in Valley",
+            category: "Transit & Infrastructure",
+            type: "Evergreen",
+            demandScore: 95,
+            competition: "Rendah",
+            buyerIntent: "Dokumenter transportasi, promosi pariwisata, company profile BUMN",
+            whyItSells: "Drone mengikuti kereta cepat aerodinamis putih meluncur mulus melintasi jembatan beton di antara perbukitan hijau asri.",
+            keywords: ["high speed bullet train", "aerial drone 4k", "railroad bridge green hills", "futuristic transit", "shinkansen bullet train", "modern railway transport", "cinematic train tracking", "infrastructure documentary", "clean electric travel", "fast passenger train"],
+            suggestedRatio: "16:9 4K",
+            prompt: "Cinematic 4K aerial drone shot flying smoothly tracking streamlined white high-speed bullet train crossing elegant concrete viaduct bridge over lush green mountain valley.",
+            adobeQuery: "aerial drone high speed train 4k",
+          },
+          {
+            rank: 3,
+            strikeDays: 27,
+            rankShift: 0,
+            title: "Smooth Gimbal Walkthrough: Sunlit High-End Architectural Living Room",
+            category: "Real Estate & Interior",
+            type: "Evergreen",
+            demandScore: 93,
+            competition: "Tinggi",
+            buyerIntent: "Agen properti mewah, developer perumahan elite, arsitek interior",
+            whyItSells: "Gerakan kamera gimbal lambat memasuki ruang tamu minimalis dengan jendela kaca setinggi langit-langit, sofa krem, dan lantai kayu ek.",
+            keywords: ["luxury real estate interior", "gimbal walkthrough 4k", "modern living room sunlit", "architectural home tour", "minimalist luxury villa", "floor to ceiling windows", "interior design b-roll", "aesthetic home decor", "warm wooden floor", "residential showcase"],
+            suggestedRatio: "16:9 4K 60fps",
+            prompt: "Smooth gliding gimbal shot moving slowly through magnificent bright minimalist luxury living room with massive floor to ceiling glass windows, warm oak flooring, designer furniture.",
+            adobeQuery: "luxury interior living room walkthrough 4k",
+          },
+          {
+            rank: 4,
+            strikeDays: 11,
+            rankShift: 3,
+            title: "Macro Slow Motion: Fresh Golden Honey Dripping from Wooden Dipper",
+            category: "Food & Macro",
+            type: "Evergreen",
+            demandScore: 92,
+            competition: "Sedang",
+            buyerIntent: "Brand madu organik, suplemen herbal, iklan sarapan sehat",
+            whyItSells: "120fps tetesan madu kental transparan berkilau keemasan jatuh perlahan di atas sarang lebah atau roti panggang dengan cahaya backlight alami.",
+            keywords: ["honey dripping slow motion", "macro 120fps food", "wooden honey dipper", "organic raw honey", "honeycomb texture", "warm golden backlight", "healthy breakfast b-roll", "pure syrup drip", "macro cinematic food", "gourmet dessert footage"],
+            suggestedRatio: "16:9 4K",
+            prompt: "Extreme close up 120fps slow motion of thick golden raw honey slowly cascading off wooden grooved honey dipper in glowing warm backlit morning light, crystal clear detail.",
+            adobeQuery: "honey dripping slow motion macro 4k",
+          },
+          {
+            rank: 5,
+            strikeDays: 8,
+            rankShift: 2,
+            title: "Vertical 9:16: Student Unboxing New Smartphone with Excitement",
+            category: "Tech & Social Media",
+            type: "Breakout",
+            demandScore: 91,
+            competition: "Sedang",
+            buyerIntent: "Iklan gadget TikTok, kampanye promo cicilan elektronik",
+            whyItSells: "Video vertikal estetik tangan membuka segel kotak smartphone premium baru, membuka plastik pelindung dengan suara 'satisfying' alami.",
+            keywords: ["smartphone unboxing vertical", "9:16 reels tech", "unboxing new phone", "gadget reveal", "satisfying peeling film", "clean desk unboxing", "gen z tech review", "mobile unboxing b-roll", "aesthetic device setup", "tiktok tech video"],
+            suggestedRatio: "9:16 Vertical 4K",
+            prompt: "Vertical 9:16 format overhead shot of hands carefully unboxing brand new sleek smartphone from minimalist box on matte concrete desk, peeling protective screen film smoothly.",
+            adobeQuery: "unboxing smartphone vertical 9:16 4k",
+          },
+          {
+            rank: 6,
+            strikeDays: 16,
+            rankShift: -1,
+            title: "Surgeon Hands Performing Laparoscopic Keyhole Surgery in OR",
+            category: "Healthcare & Surgery",
+            type: "Evergreen",
+            demandScore: 94,
+            competition: "Rendah",
+            buyerIntent: "Rumah sakit spesialis, produsen alat bedah, webinar medis",
+            whyItSells: "Footage ruang operasi modern steril dengan tangan dokter memegang instrumen laparoskopi presisi dengan lampu bedah LED terfokus.",
+            keywords: ["laparoscopic surgery", "operating theater 4k", "surgeon hands sterile", "medical procedure b-roll", "hospital surgery lighting", "surgical instruments", "minimally invasive operation", "doctor operating room", "clinical operation 4k", "healthcare surgery"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Cinematic shot in high-tech sterile operating room showing skilled surgeons in teal scrubs operating precision laparoscopic surgical instruments under bright surgical theater lights.",
+            adobeQuery: "laparoscopic surgery operating room sterile 4k",
+          },
+          {
+            rank: 7,
+            strikeDays: 6,
+            rankShift: 1,
+            title: "Greenhouse Drone Flyover: Crisp Lettuce Trays in Hydroponic Nursery",
+            category: "Agrotech & Drone",
+            type: "Breakout",
+            demandScore: 89,
+            competition: "Rendah",
+            buyerIntent: "Pemerintah ketahanan pangan, investor agritech, majalah inovasi hijau",
+            whyItSells: "Penerbangan drone di dalam kanopi rumah kaca modern melewati lautan selada hijau segar dengan sprinkler kabut air berputar halus.",
+            keywords: ["hydroponic greenhouse drone", "vertical farm nursery", "crisp lettuce seedling", "mist sprinkler indoor", "indoor agrotech 4k", "smart horticulture", "automated greenhouse", "clean water farming", "commercial hydroponics", "fresh crop aerial"],
+            suggestedRatio: "16:9 4K",
+            prompt: "Slow low altitude indoor drone flight gliding over endless vibrant green rows of hydroponic butterhead lettuce trays inside luminous glass commercial greenhouse.",
+            adobeQuery: "hydroponic greenhouse drone lettuce 4k",
+          },
+          {
+            rank: 8,
+            strikeDays: 13,
+            rankShift: -2,
+            title: "Yoga Instructor Practicing Sunrise Flow on Ocean Wooden Deck",
+            category: "Wellness & Lifestyle",
+            type: "Evergreen",
+            demandScore: 88,
+            competition: "Tinggi",
+            buyerIntent: "Aplikasi relaksasi, resort spa tropis, iklan pakaian olahraga yoga",
+            whyItSells: "Siluet lentur instruktur yoga melakukan pose Warrior II di atas dek kayu dengan ombak pantai pecah lembut di belakangnya saat matahari terbit.",
+            keywords: ["sunrise yoga ocean", "warrior pose beach", "wellness meditation deck", "morning stretching coastal", "yoga retreat resort", "mindful breathing waves", "golden hour fitness", "outdoor pilates workout", "peaceful lifestyle b-roll", "healthy habits 4k"],
+            suggestedRatio: "16:9 / 9:16 4K",
+            prompt: "Graceful woman doing warrior yoga pose on weathered wooden deck overlooking tranquil ocean waves glowing in golden morning sunrise light, peaceful ocean breeze.",
+            adobeQuery: "sunrise yoga ocean wooden deck 4k",
+          },
+          {
+            rank: 9,
+            strikeDays: 3,
+            rankShift: 2,
+            title: "Welder Spark Trails Flying from Heavy Industrial Steel Beams",
+            category: "Industrial & Manufacturing",
+            type: "Evergreen",
+            demandScore: 90,
+            competition: "Sedang",
+            buyerIntent: "Perusahaan manufaktur, pabrik baja, video profil industri berat",
+            whyItSells: "Percikan api las kuning keemasan meluncur dramatis dalam gerakan lambat 60fps dengan helm las gelap pekerja di latar belakang.",
+            keywords: ["welding sparks slow motion", "metal fabrication", "heavy industry welder", "steel construction welding", "protective mask welding", "industrial factory b-roll", "glowing fire sparks", "manufacturing process 4k", "blue torch flame", "hard labor craftsmanship"],
+            suggestedRatio: "16:9 4K 60fps",
+            prompt: "Dramatic close up of industrial welder wearing protective helmet joining heavy structural steel beams, cascade of brilliant golden glowing sparks showering in slow motion.",
+            adobeQuery: "industrial welder sparks slow motion 4k",
+          },
+          {
+            rank: 10,
+            strikeDays: 1,
+            rankShift: "new",
+            title: "Electric Scooter Commuter Gliding Through Autumn Tree Alley",
+            category: "Micro Mobility & Urban",
+            type: "Seasonal",
+            demandScore: 87,
+            competition: "Sedang",
+            buyerIntent: "Aplikasi sewa e-scooter, lifestyle kota sehat, artikel ramah lingkungan",
+            whyItSells: "Kamera slider mengikuti pekerja muda bersepatu kets meluncur di jalur sepeda dengan daun kuning musim gugur berterbangan tertiup roda.",
+            keywords: ["electric scooter commute", "autumn bike path", "urban micro mobility", "riding escooter city", "yellow leaves falling", "clean city transport", "young commuter lifestyle", "sustainable transit b-roll", "morning commute park", "eco friendly riding 4k"],
+            suggestedRatio: "16:9 4K / 9:16",
+            prompt: "Tracking shot alongside smiling stylish young commuter riding sleek black electric kick scooter down park avenue with golden autumn leaves fluttering to the ground, crisp daylight.",
+            adobeQuery: "electric scooter commuter autumn park 4k",
+          }
+        ]
+      },
+      sourceC: {
+        name: "Sumber Data C: Global Buyer Search Volume & Commercial Intent",
+        description: "Mengkombinasikan volume penelusuran agensi korporat global, kalender pemasaran musiman, tren ESG global, dan Google Trends commercial keyword intent.",
+        foto: [
+          {
+            rank: 1,
+            strikeDays: 15,
+            rankShift: 2,
+            title: "Enterprise AI Ethics Board Meeting Reviewing Algorithms",
+            category: "Corporate & Tech",
+            type: "Breakout",
+            demandScore: 97,
+            competition: "Rendah",
+            buyerIntent: "Laporan kepatuhan AI, firma hukum teknologi, media finansial",
+            whyItSells: "Topik regulasi AI sedang menjadi mandat hukum di Eropa dan AS. Foto para eksekutif berdiskusi serius mengenai diagram audit AI sangat langka.",
+            keywords: ["ai ethics", "algorithm governance", "corporate board meeting", "compliance review", "ai regulation", "responsible technology", "diverse executives", "legal tech meeting", "data privacy board", "enterprise governance"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Corporate board of diverse executives gathered in modern glass boardroom seriously discussing flowcharts of ethical artificial intelligence guidelines on display screen.",
+            adobeQuery: "ai ethics corporate board governance meeting",
+          },
+          {
+            rank: 2,
+            strikeDays: 20,
+            rankShift: 0,
+            title: "Global Supply Chain Shipping Port Gantry Cranes at Twilight",
+            category: "Logistics & Trade",
+            type: "Evergreen",
+            demandScore: 95,
+            competition: "Sedang",
+            buyerIntent: "Laporan perdagangan ekspor-impor, saham perkapalan, majalah ekonomi",
+            whyItSells: "Deretan derek pelabuhan kontainer raksasa dengan lampu tembak terang dan perairan berkilau saat senja.",
+            keywords: ["shipping port", "container terminal", "gantry cranes twilight", "freight logistics", "global commerce", "cargo vessel dock", "harbor container stack", "maritime trade", "international transport", "industrial port lighting"],
+            suggestedRatio: "16:9 Landscape / RAW",
+            prompt: "Wide panoramic evening photograph of bustling international deep-sea container port with towering red gantry cranes loading massive cargo vessels under deep blue twilight sky.",
+            adobeQuery: "shipping port container gantry cranes twilight",
+          },
+          {
+            rank: 3,
+            strikeDays: 12,
+            rankShift: 1,
+            title: "Inclusive Neurodiversity Workplace Ergonomic Desk",
+            category: "Human Resources",
+            type: "Breakout",
+            demandScore: 91,
+            competition: "Sangat Rendah",
+            buyerIntent: "Platform HR korporat, konsultan tempat kerja inklusif, majalah karier",
+            whyItSells: "Visual karyawan fokus memakai noise-cancelling headphones dengan lampu meja hangat dan suasana kerja tenang tanpa distraksi.",
+            keywords: ["neurodiversity workplace", "quiet office pod", "noise cancelling headphones", "inclusive hr culture", "focused employee desk", "adhd friendly office", "ergonomic standing desk", "mental health workplace", "cozy modern cubicle", "workplace accommodation"],
+            suggestedRatio: "3:2 / 16:9",
+            prompt: "Young creative professional wearing sleek over-ear headphones working with intense peaceful focus in a modern sound-dampened office pod with warm wooden acoustic slats.",
+            adobeQuery: "neurodiversity inclusive workplace employee headphones",
+          },
+          {
+            rank: 4,
+            strikeDays: 17,
+            rankShift: -1,
+            title: "Hydrogen Fuel Cell Infrastructure & Zero Emission Energy",
+            category: "Clean Tech & ESG",
+            type: "Evergreen",
+            demandScore: 93,
+            competition: "Rendah",
+            buyerIntent: "BUMN energi terbarukan, presentasi transisi hidrogen, laporan ESG",
+            whyItSells: "Teknisi memeriksa tangki hidrogen hijau modern berwarna putih bersih dengan indikator tekanan gas digital.",
+            keywords: ["hydrogen fuel cell", "clean hydrogen storage", "zero emissions tech", "green energy technician", "industrial gas pressure", "hydrogen economy", "future energy transition", "sustainable power plant", "alternative fuel", "esg energy investment"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Industrial engineer checking digital pressure gauges on gleaming white clean hydrogen fuel storage tanks at innovative renewable energy plant, clean industrial aesthetic.",
+            adobeQuery: "hydrogen fuel cell storage clean energy",
+          },
+          {
+            rank: 5,
+            strikeDays: 6,
+            rankShift: 3,
+            title: "Gen-Z Micro-Influencer Filming Skincare GRWM Video",
+            category: "Beauty & Social",
+            type: "Breakout",
+            demandScore: 90,
+            competition: "Sedang",
+            buyerIntent: "Brand kosmetik organik, software editing video, lampu ringlight",
+            whyItSells: "Remaja perempuan mengaplikasikan serum wajah di depan ringlight tripod smartphone dengan senyum natural santai (Get Ready With Me format).",
+            keywords: ["grwm skincare", "influencer ring light", "filming tiktok video", "serum application", "beauty content creator", "vlogger vanity mirror", "authentic gen z beauty", "smartphone tripod recording", "natural morning routine", "cosmetic tutorial"],
+            suggestedRatio: "4:5 / 9:16",
+            prompt: "Young woman happily applying glowing hydrating face serum while recording a GRWM video on smartphone mounted on ring light in bright aesthetic bedroom vanity.",
+            adobeQuery: "content creator filming skincare grwm ring light",
+          },
+          {
+            rank: 6,
+            strikeDays: 24,
+            rankShift: 0,
+            title: "High-Speed Rail Clean Modern Station Interior",
+            category: "Travel & Transit",
+            type: "Evergreen",
+            demandScore: 89,
+            competition: "Sedang",
+            buyerIntent: "Majalah wisata, asuransi perjalanan, promosi kereta api",
+            whyItSells: "Interior peron stasiun kereta cepat dengan atap kanopi melengkung futuristik dan penumpang membawa koper kabin.",
+            keywords: ["train station platform", "passenger suitcase commuter", "modern railway architecture", "bullet train waiting", "traveler luggage", "high ceiling transit", "glass canopy station", "clean public transport", "business trip commuter", "railway departure"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Wide perspective shot of bright, spotless modern railway station platform with sleek bullet train boarding, passengers with wheeled luggage rolling alongside.",
+            adobeQuery: "modern train station platform passengers suitcase",
+          },
+          {
+            rank: 7,
+            strikeDays: 8,
+            rankShift: -2,
+            title: "Sustainable Bamboo & Wooden Kitchen Utensil Zero Plastic",
+            category: "Eco Lifestyle",
+            type: "Evergreen",
+            demandScore: 87,
+            competition: "Tinggi",
+            buyerIntent: "Brand peralatan dapur ramah lingkungan, majalah kuliner sehat",
+            whyItSells: "Set sendok kayu, spatula bambu, dan sikat sabut kelapa di atas meja dapur marmer putih bersih bernuansa earthy.",
+            keywords: ["bamboo kitchen utensils", "zero plastic cookware", "wooden spatula set", "coconut fiber brush", "eco friendly home", "sustainable kitchenware", "clean marble countertop", "natural living cooking", "plastic free cooking", "organic lifestyle utensils"],
+            suggestedRatio: "4:5 / 1:1",
+            prompt: "Minimalist top-down arrangement of sustainable bamboo kitchen spatulas, wooden spoons, and coconut husk cleaning scrubbers on clean white marble counter, morning botanical shadows.",
+            adobeQuery: "bamboo wooden kitchen utensils zero plastic",
+          },
+          {
+            rank: 8,
+            strikeDays: 2,
+            rankShift: "new",
+            title: "Black Friday & Cyber Week E-Commerce Warehouse Rush",
+            category: "Retail Season",
+            type: "Seasonal",
+            demandScore: 94,
+            competition: "Tinggi",
+            buyerIntent: "Media e-commerce, kurir kilat, artikel belanja online diskon",
+            whyItSells: "Tumpukan paket karton berlabel barcode siap kirim di conveyor belt gudang saat momentum Black Friday.",
+            keywords: ["black friday shipping", "cyber monday warehouse", "cardboard packages conveyor", "ecommerce rush delivery", "sorting facility parcels", "online shopping peak", "holiday fulfillment boxes", "express shipping logistics", "delivery hub cartons", "retail supply peak"],
+            suggestedRatio: "16:9 Landscape",
+            prompt: "Vast distribution center conveyor line moving hundreds of taped cardboard parcel boxes during peak holiday shopping season, motion blur on fast moving boxes.",
+            adobeQuery: "ecommerce warehouse parcel boxes conveyor peak",
+          },
+          {
+            rank: 9,
+            strikeDays: 10,
+            rankShift: -1,
+            title: "Smart Ring & Minimalist Health Bio-Tracker on Finger",
+            category: "Tech Gadgets",
+            type: "Breakout",
+            demandScore: 92,
+            competition: "Rendah",
+            buyerIntent: "Startup smart wearables, asuransi kesehatan preventif, klinik tidur",
+            whyItSells: "Tren beralih dari jam tangan besar ke smart ring minimalis di jari tangan yang memantau kualitas tidur dan recovery.",
+            keywords: ["smart ring tracker", "wearable finger biometric", "health ring sensor", "minimalist tech accessory", "sleep quality monitoring", "titanium smart ring", "heart rate tracker ring", "future wearables", "subtle fitness tech", "finger gadget b-roll"],
+            suggestedRatio: "1:1 / 4:5 Macro",
+            prompt: "Close up macro of elegant titanium smart ring on human finger with tiny glowing green sensor underneath resting on laptop keyboard, clean modern lifestyle lighting.",
+            adobeQuery: "smart ring wearable health tracker finger",
+          },
+          {
+            rank: 10,
+            strikeDays: 14,
+            rankShift: 1,
+            title: "Urban Vertical Forest Skyscraper Apartment Balconies",
+            category: "Architecture & Ecology",
+            type: "Evergreen",
+            demandScore: 88,
+            competition: "Sedang",
+            buyerIntent: "Developer apartemen hijau, majalah arsitektur urban, kampanye ESG",
+            whyItSells: "Gedung apartemen modern dengan balkon bertingkat dipenuhi ratusan pohon hijau lebat (Bosco Verticale style).",
+            keywords: ["vertical forest building", "green skyscraper balconies", "urban botany architecture", "sustainable residential tower", "plants on balcony", "eco luxury apartment", "green facade city", "biophilic design architecture", "urban biodiversity", "environmental building"],
+            suggestedRatio: "4:5 / 16:9",
+            prompt: "Low angle looking up at stunning modern skyscraper apartment balconies densely planted with lush green trees and cascading hanging plants against a bright blue sky.",
+            adobeQuery: "vertical forest building architecture green balconies",
+          }
+        ],
+        image: [
+          {
+            rank: 1,
+            strikeDays: 18,
+            rankShift: 0,
+            title: "Generative AI Prompt Engineering Terminal Vector Flowchart",
+            category: "AI & Programming",
+            type: "Breakout",
+            demandScore: 96,
+            competition: "Rendah",
+            buyerIntent: "Blog edukasi AI, presentasi bootcamp software engineer, landing page SaaS",
+            whyItSells: "Bagan alur vektor diagram logika prompt LLM (System -> Prompt -> Output -> RAG Vector Search) yang elegan dan bersih.",
+            keywords: ["prompt engineering diagram", "ai flowchart vector", "llm architecture infographic", "rag search diagram", "neural network logic vector", "vector database flow", "machine learning workflow", "ai pipeline infographic", "developer schema vector", "tech infographic layout"],
+            suggestedRatio: "16:9 Vector EPS/AI",
+            prompt: "Clean modern technical flowchart vector diagram illustrating AI prompt engineering and LLM pipeline, dark blue background with neon teal and amber glowing connector nodes.",
+            adobeQuery: "ai prompt engineering flowchart diagram vector",
+          },
+          {
+            rank: 2,
+            strikeDays: 21,
+            rankShift: 1,
+            title: "3D Claymorphism Finance & Crypto Coin Icons Set",
+            category: "3D Icons",
+            type: "Evergreen",
+            demandScore: 94,
+            competition: "Tinggi",
+            buyerIntent: "Aplikasi mobile banking, website web3, kartu debit virtual",
+            whyItSells: "Icon 3D gaya tanah liat lembut (soft claymorphism) bentuk dompet, koin emas, brankas, dan perisai perlindungan.",
+            keywords: ["claymorphism 3d icon", "finance clay icons", "soft 3d wallet coin", "cute banking icons", "crypto clay render vector", "fintech 3d glyphs", "matte texture coins", "safe box 3d asset", "pastel financial icons", "app ui 3d elements"],
+            suggestedRatio: "Icon Set (PNG / SVG)",
+            prompt: "Set of cute 3D claymorphism finance icons, soft matte rounded gold coins, pastel green wallet, blue shield with checkmark, floating with soft drop shadows on white background.",
+            adobeQuery: "3d claymorphism finance icons set",
+          },
+          {
+            rank: 3,
+            strikeDays: 13,
+            rankShift: 2,
+            title: "Biophilic Design Leaves & Soft Architecture Background",
+            category: "Abstract Wallpaper",
+            type: "Evergreen",
+            demandScore: 90,
+            competition: "Sedang",
+            buyerIntent: "Website studio yoga, kemasan produk aromaterapi, poster spa",
+            whyItSells: "Gradasi bentuk lengkung arsitektur lembut dikombinasikan dengan bayangan siluet daun palem yang menenangkan.",
+            keywords: ["biophilic design background", "organic curved shapes", "soft architectural arches", "palm shadow overlay", "minimalist beige vector", "spa wallpaper vector", "tranquil interior backdrop", "wellness vector texture", "botanical shadows art", "calm neutral background"],
+            suggestedRatio: "16:9 Vector",
+            prompt: "Minimalist biophilic architectural background vector, soft sweeping curved plaster walls in warm limestone and sand tones, delicate palm leaf shadow overlays, tranquil airy aesthetic.",
+            adobeQuery: "biophilic design arches palm shadows vector",
+          },
+          {
+            rank: 4,
+            strikeDays: 9,
+            rankShift: -1,
+            title: "Cyberpunk Glitch Neon Typography Alphabet Letters",
+            category: "Typography",
+            type: "Breakout",
+            demandScore: 88,
+            competition: "Sedang",
+            buyerIntent: "Poster festival musik elektronik, thumbnail YouTube gaming, logo esports",
+            whyItSells: "Huruf abjad vektor dengan efek pemisahan warna RGB (chromatic aberration) dan garis laser futuristik.",
+            keywords: ["cyberpunk font vector", "glitch typography alphabet", "neon chromatic letters", "synthwave alphabet vector", "futuristic display font", "rgb split letters", "distorted tech typography", "scifi headline font", "digital distortion font", "esports letterset"],
+            suggestedRatio: "Vector Alphabet Sheet",
+            prompt: "Complete alphabet set of futuristic cyberpunk glitch typography vectors, bold geometric sans serif letters with RGB split chromatic aberration, glowing neon magenta and cyan lines.",
+            adobeQuery: "cyberpunk glitch typography alphabet vector",
+          },
+          {
+            rank: 5,
+            strikeDays: 25,
+            rankShift: 0,
+            title: "Global Currency Symbols & Money Flow Infographic",
+            category: "Finance & Trade",
+            type: "Evergreen",
+            demandScore: 92,
+            competition: "Tinggi",
+            buyerIntent: "Laporan devisa bank sentral, aplikasi kurs valas, media bursa saham",
+            whyItSells: "Simbol mata uang dunia (Dollar, Euro, Yen, Pound, Yuan, Rupiah) dalam diagram lingkaran interaktif siap pakai.",
+            keywords: ["currency symbols vector", "global money flow", "forex exchange diagram", "dollar euro yen yuan", "financial market chart", "currency exchange icons", "international trade infographic", "banking glyphs vector", "monetary policy diagram", "foreign exchange vector"],
+            suggestedRatio: "16:9 Vector Infographic",
+            prompt: "Clean modern corporate infographic illustration of interconnected global currency symbols forming a circular money flow diagram, sharp vector lines, gold and navy blue palette.",
+            adobeQuery: "global currency symbols money flow vector diagram",
+          },
+          {
+            rank: 6,
+            strikeDays: 5,
+            rankShift: 3,
+            title: "Abstract Liquid Glass Morphism Frosted Card UI Panels",
+            category: "UI Design & Web",
+            type: "Breakout",
+            demandScore: 93,
+            competition: "Sedang",
+            buyerIntent: "Template dashboard SaaS, wallpaper desktop macOS, UI portofolio",
+            whyItSells: "Panel kartu kaca tembus pandang buram (frosted glassmorphism) dengan bias cahaya pelangi halus di sudut lengkungnya.",
+            keywords: ["glassmorphism ui cards", "frosted glass panels vector", "blur backdrop container", "translucent ui vector", "liquid glass texture", "modern dashboard panels", "rainbow refraction edge", "clean modern web ui", "glass effect mockup", "sleek card template"],
+            suggestedRatio: "16:9 Vector Layout",
+            prompt: "Set of frosted glassmorphism UI card panels vector floating over subtle pastel gradient, soft realistic blur and rainbow specular light refractions along curved edges.",
+            adobeQuery: "glassmorphism frosted cards vector ui",
+          },
+          {
+            rank: 7,
+            strikeDays: 16,
+            rankShift: -2,
+            title: "Renewable Energy Icons & Grid Infrastructure Schematics",
+            category: "Energy & Infrastructure",
+            type: "Evergreen",
+            demandScore: 89,
+            competition: "Rendah",
+            buyerIntent: "Proposal tender PLN/utilitas, infografis kementerian energi",
+            whyItSells: "Skema jaringan kabel pintar (smart grid), turbin angin, dam hidroelektrik, dan panel surya dalam satu set vektor teknis rapi.",
+            keywords: ["renewable energy schematics", "smart grid vector", "wind solar hydro icons", "clean power transmission", "green energy blueprint", "electricity network diagram", "substation schematic vector", "sustainable power icons", "infrastructure engineering vector", "clean tech symbols"],
+            suggestedRatio: "Technical Vector Set (EPS)",
+            prompt: "Vector technical schematic diagram of renewable smart electrical grid connecting solar farm, offshore wind, and battery storage to clean city, blueprint cyan and white style.",
+            adobeQuery: "smart grid renewable energy schematic vector",
+          },
+          {
+            rank: 8,
+            strikeDays: 3,
+            rankShift: 2,
+            title: "Minimalist Outline Map of World with Data Route Arcs",
+            category: "Maps & Geography",
+            type: "Evergreen",
+            demandScore: 91,
+            competition: "Tinggi",
+            buyerIntent: "Slide presentasi korporat multinasional, web ekspedisi global",
+            whyItSells: "Peta dunia titik-titik (dot map) atau garis luar minimalis dengan busur lengkung rute penerbangan dan koneksi data global.",
+            keywords: ["world map vector", "global data connection arcs", "flight routes map", "minimalist world outline", "dotted world map", "global network infographic", "corporate geography map", "international routes vector", "telecommunication map", "worldwide shipping lines"],
+            suggestedRatio: "16:9 Landscape Vector",
+            prompt: "Clean minimalist dark gray world map vector with glowing blue and gold curved flight connection arcs between major world capitals, pinpoint nodes, high precision vector.",
+            adobeQuery: "world map connection routes arcs vector",
+          },
+          {
+            rank: 9,
+            strikeDays: 2,
+            rankShift: "new",
+            title: "New Year Countdown Clocks & Golden Champagne Sparkles",
+            category: "Holiday & Celebration",
+            type: "Seasonal",
+            demandScore: 95,
+            competition: "Tinggi",
+            buyerIntent: "Undangan pesta pergantian tahun, flyer diskon akhir tahun, banner hotel",
+            whyItSells: "Jam dinding mewah menunjukkan pukul 11:59 dengan partikel emas berkilau dan pita konfeti anggun di latar hitam.",
+            keywords: ["new year countdown vector", "midnight clock illustration", "golden sparkles confetti", "champagne celebration banner", "nye party flyer vector", "luxury gold clock 12", "festive glitter background", "happy new year vector", "golden ribbons backdrop", "celebration event art"],
+            suggestedRatio: "16:9 & 1:1 Vector",
+            prompt: "Luxurious New Year countdown clock at midnight vector illustration, elegant golden roman numerals, glowing exploding champagne bokeh sparkles and gold confetti on deep obsidian background.",
+            adobeQuery: "new year countdown clock golden sparkles vector",
+          },
+          {
+            rank: 10,
+            strikeDays: 11,
+            rankShift: -1,
+            title: "Modern Coffee Shop Menu Vector Icons & Typography Badges",
+            category: "Hospitality & Food",
+            type: "Evergreen",
+            demandScore: 86,
+            competition: "Tinggi",
+            buyerIntent: "Buku menu kafe baru, chalkboard lettering, stiker packaging cup kopi",
+            whyItSells: "Ikon cangkir espresso, v60 pour-over, french press, biji kopi arabika, dan croissant dengan tipografi estetik ala kafe hipster.",
+            keywords: ["coffee shop icons", "cafe menu vector", "pour over v60 glyph", "espresso cup outline", "coffee bean stamp", "artisan cafe branding", "chalkboard coffee badge", "barista equipment symbols", "specialty coffee vector", "pastry cafe logos"],
+            suggestedRatio: "Icon Set (AI/SVG)",
+            prompt: "Set of sophisticated minimalist vector icons for artisanal specialty coffee shop menu, line art chemex, espresso machine, pour over dripper, warm roasted coffee palette.",
+            adobeQuery: "specialty coffee shop menu vector icons",
+          }
+        ],
+        video: [
+          {
+            rank: 1,
+            strikeDays: 28,
+            rankShift: 0,
+            title: "4K Aerial Flyover: Massive Solar Power Plant in Desert at Sunset",
+            category: "Energy & Infrastructure",
+            type: "Evergreen",
+            demandScore: 98,
+            competition: "Sedang",
+            buyerIntent: "Laporan tahunan ESG korporat, iklan TV transisi energi, keynote B2B",
+            whyItSells: "Drone 4K meluncur mulus di atas ribuan panel surya cermin berkilau memantulkan cahaya jingga matahari terbenam di gurun pasir luas.",
+            keywords: ["desert solar farm drone", "aerial 4k renewable energy", "photovoltaic panels sunset", "clean energy infrastructure", "solar power plant flight", "esg keynote b-roll", "golden hour drone", "environmental investment", "clean electricity grid", "solar array aerial"],
+            suggestedRatio: "16:9 4K 60fps",
+            prompt: "Breathtaking 4K aerial drone shot slowly drifting over vast endless geometric rows of reflective solar panel farms in desert valley glowing under fiery orange sunset sky.",
+            adobeQuery: "desert solar panel farm aerial drone 4k",
+          },
+          {
+            rank: 2,
+            strikeDays: 16,
+            rankShift: 2,
+            title: "Autonomous Delivery Drone Landing on Smart Residential Pad",
+            category: "Delivery & Tech",
+            type: "Breakout",
+            demandScore: 96,
+            competition: "Rendah",
+            buyerIntent: "E-commerce masa depan, liputan teknologi logistik, aplikasi kurir cepat",
+            whyItSells: "Drone multikopter presisi mendarat mulus meletakkan boks paket di halaman rumah modern dengan lampu indikator hijau.",
+            keywords: ["delivery drone landing", "autonomous parcel delivery", "future smart logistics", "quadcopter package drop", "suburban drone delivery", "automated courier b-roll", "last mile delivery 4k", "e-commerce drone tech", "precision landing pad", "future transportation"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Crisp 4K video of autonomous four-rotor parcel delivery drone smoothly descending to deliver cardboard parcel onto illuminated landing pad in front of modern suburban home.",
+            adobeQuery: "autonomous delivery drone parcel landing 4k",
+          },
+          {
+            rank: 3,
+            strikeDays: 14,
+            rankShift: -1,
+            title: "Doctor Reviewing 3D Brain MRI Scan on Holographic Interactive Display",
+            category: "Medical AI & Biotech",
+            type: "Breakout",
+            demandScore: 94,
+            competition: "Sedang",
+            buyerIntent: "Perusahaan diagnostik AI, rumah sakit spesialis saraf, presentasi kedokteran",
+            whyItSells: "Dokter berseragam jas putih menggeser dan memutar model 3D otak manusia dengan gestur jari di layar transparan bercahaya lembut.",
+            keywords: ["mri brain scan 3d", "doctor holographic display", "digital medical diagnostics", "neurology ai hospital", "interactive medical screen", "future medicine b-roll", "biotech visualization 4k", "radiologist consultation", "health tech interface", "telemedicine surgeon 4k"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Modern shot of focused neurosurgeon in clean high-tech hospital examining illuminated 3D rotating brain MRI hologram on transparent touch glass screen, realistic medical UI.",
+            adobeQuery: "doctor 3d brain mri hologram display 4k",
+          },
+          {
+            rank: 4,
+            strikeDays: 19,
+            rankShift: 1,
+            title: "Crowd of Diverse Pedestrians Commuting Across Crosswalk in Tokyo",
+            category: "Urban & Travel",
+            type: "Evergreen",
+            demandScore: 91,
+            competition: "Tinggi",
+            buyerIntent: "Video transisi berita internasional, video artikel globalisasi, intro travel",
+            whyItSells: "Gerakan lambat sinematik 60fps pejalan kaki berbagai bangsa menyeberangi jalan raya Shibuya dengan latar layar neon gedung kota.",
+            keywords: ["tokyo pedestrian scramble", "shibuya crosswalk slow motion", "diverse commuters walking", "metropolitan city crowd", "urban commute lifestyle", "neon signs crossing", "asian city rush hour", "pedestrian crosswalk 4k", "tokyo street life", "global city commute"],
+            suggestedRatio: "16:9 4K 60fps",
+            prompt: "Cinematic 4K 60fps slow motion shot of dense crowd of diverse stylish commuters walking across bustling metropolitan crosswalk, soft street lighting, authentic urban energy.",
+            adobeQuery: "tokyo pedestrian scramble crossing slow motion 4k",
+          },
+          {
+            rank: 5,
+            strikeDays: 8,
+            rankShift: 3,
+            title: "Precision Laser Cutting Machine Sparks Flying on Sheet Metal",
+            category: "Industrial & Manufacturing",
+            type: "Evergreen",
+            demandScore: 93,
+            competition: "Rendah",
+            buyerIntent: "Pabrik otomotif, perusahaan teknik mesin, video profil industri alat berat",
+            whyItSells: "Kepala nozzle laser bergerak lincah memotong pelat baja dengan percikan api biru-jingga spektakuler dalam resolusi sangat tajam.",
+            keywords: ["cnc laser cutting sparks", "sheet metal fabrication", "industrial laser machine", "precision manufacturing 4k", "steel cutting sparks", "automated factory machinery", "metal engineering b-roll", "high precision laser", "heavy industry process", "sheet metal spark trails"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Extreme sharp 4K close up of CNC high precision fiber laser cutting complex mechanical part from thick steel sheet, intense shower of brilliant sparks reflecting off metal surface.",
+            adobeQuery: "cnc laser cutting machine sheet metal sparks 4k",
+          },
+          {
+            rank: 6,
+            strikeDays: 22,
+            rankShift: 0,
+            title: "Macro Slow Motion: Water Droplets Falling into Crystal Clear Lake",
+            category: "Nature & Zen",
+            type: "Evergreen",
+            demandScore: 89,
+            competition: "Tinggi",
+            buyerIntent: "Iklan air mineral, aplikasi meditasi relaksasi, background video musik",
+            whyItSells: "Tetesan air murni jatuh menghasilkan gelombang lingkaran konsentris sempurna dalam gerakan 120fps sangat jernih.",
+            keywords: ["water droplet ripple slow motion", "macro clean water drop", "pure lake ripple 120fps", "calm water circle waves", "zen nature background", "mineral water purity", "clear water splash", "soothing water meditation", "freshwater macro 4k", "pristine aquatic ripples"],
+            suggestedRatio: "16:9 Landscape 4K 120fps",
+            prompt: "Hypnotic 120fps super slow motion macro of single pristine water droplet falling into mirror-still crystal clear turquoise lake creating perfect expanding ripple rings.",
+            adobeQuery: "water droplet ripple slow motion macro 4k",
+          },
+          {
+            rank: 7,
+            strikeDays: 7,
+            rankShift: -2,
+            title: "Vertical 9:16: Barista Hand Pouring Matcha Green Tea Latte",
+            category: "Beverage & TikTok",
+            type: "Breakout",
+            demandScore: 92,
+            competition: "Sedang",
+            buyerIntent: "Instagram Reels kedai kopi, iklan susu oat, vlog lifestyle sehat",
+            whyItSells: "Penuangan susu oat putih berputar ke dalam cairan hijau matcha pekat dalam gelas kaca bening di atas meja marmer.",
+            keywords: ["matcha latte pour vertical", "9:16 reels coffee", "iced matcha drink", "oat milk swirl", "aesthetic cafe beverage", "barista preparation video", "satisfying drink pour", "green tea latte cafe", "refreshing beverage reels", "tiktok food b-roll"],
+            suggestedRatio: "9:16 Vertical 4K",
+            prompt: "Vertical 9:16 slow motion shot of barista pouring rich creamy white oat milk into glass of vibrant green iced matcha tea, creating hypnotic marble swirl patterns.",
+            adobeQuery: "matcha latte pour vertical reels 4k",
+          },
+          {
+            rank: 8,
+            strikeDays: 11,
+            rankShift: 1,
+            title: "Senior Man Cycling Along Scenic Coastal Boardwalk at Sunrise",
+            category: "Active Seniors",
+            type: "Evergreen",
+            demandScore: 90,
+            competition: "Rendah",
+            buyerIntent: "Asuransi pensiun, kampanye pola hidup sehat lansia, sepeda listrik e-bike",
+            whyItSells: "Pria paruh baya bersepeda santai dengan pakaian olahraga rapi dan helm di jalan setapak tepi pantai berlatar laut biru berkilauan.",
+            keywords: ["senior cycling coastal", "healthy active elderly", "retirement vitality", "coastal bike path sunrise", "smiling senior cyclist", "ebike leisure ride", "pension health lifestyle", "ocean boardwalk bike", "positive aging b-roll", "outdoor wellness senior"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Warm cinematic tracking shot of fit energetic senior man happily riding modern bicycle along wooden coastal boardwalk next to sparkling morning ocean waves.",
+            adobeQuery: "senior man cycling coastal boardwalk sunrise 4k",
+          },
+          {
+            rank: 9,
+            strikeDays: 4,
+            rankShift: -3,
+            title: "Electric Car Dashboard Digital Speedometer HUD Accelerating",
+            category: "Automotive Tech",
+            type: "Breakout",
+            demandScore: 91,
+            competition: "Sedang",
+            buyerIntent: "Review mobil listrik, iklan teknologi baterai, transisi video otomotif",
+            whyItSells: "Tampilan speedometer digital menyala memperlihatkan akselerasi angka km/h melesat cepat dengan grafik tenaga baterai dinamis.",
+            keywords: ["ev digital speedometer", "electric car acceleration hud", "dashboard instrument cluster", "fast acceleration 4k", "modern ev interior night", "battery range display", "digital cockpit driving", "futuristic car interface", "electric vehicle driving b-roll", "hud speedometer glow"],
+            suggestedRatio: "16:9 Landscape 4K",
+            prompt: "Crisp first person POV shot of glowing futuristic digital dashboard cluster inside electric vehicle, numbers climbing rapidly during silent smooth rapid acceleration at night.",
+            adobeQuery: "electric car digital speedometer acceleration hud 4k",
+          },
+          {
+            rank: 10,
+            strikeDays: 1,
+            rankShift: "new",
+            title: "Confetti Fireworks Exploding in Night Sky Over Metropolis Skyline",
+            category: "Celebration & Event",
+            type: "Seasonal",
+            demandScore: 95,
+            competition: "Tinggi",
+            buyerIntent: "Iklan festival tahun baru, perayaan hari kemerdekaan, video penutupan event",
+            whyItSells: "Kembang api emas dan merah mekar spektakuler di atas siluet gedung pencakar langit kota metropolitan dengan refleksi di sungai.",
+            keywords: ["fireworks over city skyline", "metropolis night fireworks 4k", "new year celebration fireworks", "golden sparks night sky", "city reflection fireworks", "spectacular event finale", "holiday fireworks display", "illuminated skyscraper celebration", "festive night b-roll", "urban pyrotechnics 4k"],
+            suggestedRatio: "16:9 4K 60fps",
+            prompt: "Spectacular 4K night footage of brilliant golden and crimson fireworks bursting majestically directly above modern illuminated city skyscrapers reflected in dark river below.",
+            adobeQuery: "fireworks over city skyline celebration 4k",
+          }
+        ]
+      }
+    };
+
+    // State
+    let currentSourceKey = 'sourceA'; // 'sourceA' | 'sourceB' | 'sourceC'
+    let currentCategoryKey = 'foto'; // 'foto' | 'image' | 'video'
+    let searchQuery = '';
+    let selectedFilter = 'all';
+
+    // 7-Day Trend Velocity Dataset for Source A, B, and C
+    const dailyVelocityData = {
+      sourceA: {
+        days: ["H-6", "H-5", "H-4", "H-3", "H-2", "Kemarin", "Hari Ini"],
+        foto:   [78, 81, 84, 86, 89, 93, 96],
+        vector: [70, 75, 73, 80, 84, 87, 90],
+        video:  [82, 85, 89, 91, 94, 95, 98]
+      },
+      sourceB: {
+        days: ["H-6", "H-5", "H-4", "H-3", "H-2", "Kemarin", "Hari Ini"],
+        foto:   [82, 85, 87, 86, 91, 94, 97],
+        vector: [75, 78, 82, 81, 86, 89, 93],
+        video:  [79, 81, 83, 87, 90, 92, 95]
+      },
+      sourceC: {
+        days: ["H-6", "H-5", "H-4", "H-3", "H-2", "Kemarin", "Hari Ini"],
+        foto:   [74, 76, 79, 83, 87, 90, 93],
+        vector: [80, 83, 85, 87, 88, 91, 94],
+        video:  [84, 88, 90, 92, 95, 96, 99]
+      }
+    };
+
+    // Graph Display Filter Flags
+    const graphSeriesVisible = {
+      foto: true,
+      vector: true,
+      video: true
+    };
+
+    // UI Element references
+    const srcBtnA = document.getElementById('srcBtnA');
+    const srcBtnB = document.getElementById('srcBtnB');
+    const srcBtnC = document.getElementById('srcBtnC');
+    const sourceBannerText = document.getElementById('sourceBannerText');
+
+    const tabFoto = document.getElementById('tabFoto');
+    const tabImage = document.getElementById('tabImage');
+    const tabVideo = document.getElementById('tabVideo');
+
+    const trendsGrid = document.getElementById('trendsGrid');
+    const searchInput = document.getElementById('searchInput');
+    const filterType = document.getElementById('filterType');
+    const loadingState = document.getElementById('loadingState');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    const syncTrendsBtn = document.getElementById('syncTrendsBtn');
+    const syncIcon = document.getElementById('syncIcon');
+    const syncText = document.getElementById('syncText');
+    const todayDateLabel = document.getElementById('todayDateLabel');
+
+    // Chart Canvas References
+    const trendCanvas = document.getElementById('trendVelocityCanvas');
+    const chartTooltip = document.getElementById('chartTooltip');
+    const tooltipDate = document.getElementById('tooltipDate');
+    const tooltipContent = document.getElementById('tooltipContent');
+    const toggleGraphFoto = document.getElementById('toggleGraphFoto');
+    const toggleGraphVector = document.getElementById('toggleGraphVector');
+    const toggleGraphVideo = document.getElementById('toggleGraphVideo');
+
+    // Modals
+    const dataSourceModal = document.getElementById('dataSourceModal');
+    const dataSourceInfoBtn = document.getElementById('dataSourceInfoBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const gotItBtn = document.getElementById('gotItBtn');
+
+    const aiPromptModal = document.getElementById('aiPromptModal');
+    const closeAiModalBtn = document.getElementById('closeAiModalBtn');
+    const aiPromptContent = document.getElementById('aiPromptContent');
+    const copyPromptBtn = document.getElementById('copyPromptBtn');
+
+    let canvasPoints = []; // Stores plotted coordinates for interactive hover tooltip
+
+    function renderTrendChart() {
+      if (!trendCanvas) return;
+      const ctx = trendCanvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+
+      // Fit container dimensions
+      const rect = trendCanvas.parentElement.getBoundingClientRect();
+      trendCanvas.width = rect.width * dpr;
+      trendCanvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const width = rect.width;
+      const height = rect.height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const data = dailyVelocityData[currentSourceKey] || dailyVelocityData.sourceA;
+      const padding = { top: 25, right: 30, bottom: 35, left: 45 };
+      const graphWidth = width - padding.left - padding.right;
+      const graphHeight = height - padding.top - padding.bottom;
+
+      const numPoints = data.days.length;
+      const minVal = 60;
+      const maxVal = 100;
+
+      // Draw subtle horizontal grid lines & Y labels
+      ctx.strokeStyle = "rgba(51, 65, 85, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.font = "10px 'Plus Jakarta Sans', sans-serif";
+      ctx.fillStyle = "#64748b";
+      ctx.textAlign = "right";
+
+      const gridSteps = 4;
+      for (let i = 0; i <= gridSteps; i++) {
+        const val = minVal + ((maxVal - minVal) / gridSteps) * i;
+        const y = padding.top + graphHeight - (i / gridSteps) * graphHeight;
+
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillText(Math.round(val) + " pts", padding.left - 8, y + 3);
+      }
+
+      // Draw X labels (days)
+      ctx.textAlign = "center";
+      const xPositions = [];
+      for (let i = 0; i < numPoints; i++) {
+        const x = padding.left + (i / (numPoints - 1)) * graphWidth;
+        xPositions.push(x);
+        ctx.fillText(data.days[i], x, height - 12);
+      }
+
+      canvasPoints = []; // Reset point registry
+
+      // Series definition matched with sub-category colors:
+      // Foto: Rose (#f43f5e)
+      // Vector: Amber (#f59e0b)
+      // Video: Cyan (#06b6d4)
+      const series = [
+        {
+          key: 'foto',
+          label: 'Foto Realistis',
+          color: '#f43f5e',
+          glow: 'rgba(244, 63, 94, 0.25)',
+          fillGrad: ['rgba(244, 63, 94, 0.2)', 'rgba(244, 63, 94, 0.0)'],
+          values: data.foto,
+          visible: graphSeriesVisible.foto
+        },
+        {
+          key: 'vector',
+          label: 'Vector / Image',
+          color: '#f59e0b',
+          glow: 'rgba(245, 158, 11, 0.25)',
+          fillGrad: ['rgba(245, 158, 11, 0.18)', 'rgba(245, 158, 11, 0.0)'],
+          values: data.vector,
+          visible: graphSeriesVisible.vector
+        },
+        {
+          key: 'video',
+          label: 'Video 4K / Reels',
+          color: '#06b6d4',
+          glow: 'rgba(6, 182, 212, 0.25)',
+          fillGrad: ['rgba(6, 182, 212, 0.2)', 'rgba(6, 182, 212, 0.0)'],
+          values: data.video,
+          visible: graphSeriesVisible.video
+        }
+      ];
+
+      series.forEach(s => {
+        if (!s.visible) return;
+
+        const pts = [];
+        for (let i = 0; i < numPoints; i++) {
+          const x = xPositions[i];
+          const val = s.values[i];
+          const y = padding.top + graphHeight - ((val - minVal) / (maxVal - minVal)) * graphHeight;
+          pts.push({ x, y, value: val, key: s.key, label: s.label, color: s.color, day: data.days[i] });
+        }
+
+        canvasPoints.push(...pts);
+
+        // Draw smooth bezier curve
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 0; i < pts.length - 1; i++) {
+          const xc = (pts[i].x + pts[i + 1].x) / 2;
+          const yc = (pts[i].y + pts[i + 1].y) / 2;
+          ctx.quadraticCurveTo(pts[i].x, pts[i].y, xc, yc);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+
+        // Draw gradient area underneath
+        ctx.save();
+        const areaPath = new Path2D();
+        areaPath.moveTo(pts[0].x, pts[0].y);
+        for (let i = 0; i < pts.length - 1; i++) {
+          const xc = (pts[i].x + pts[i + 1].x) / 2;
+          const yc = (pts[i].y + pts[i + 1].y) / 2;
+          areaPath.quadraticCurveTo(pts[i].x, pts[i].y, xc, yc);
+        }
+        areaPath.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        areaPath.lineTo(pts[pts.length - 1].x, padding.top + graphHeight);
+        areaPath.lineTo(pts[0].x, padding.top + graphHeight);
+        areaPath.closePath();
+
+        const grad = ctx.createLinearGradient(0, padding.top, 0, padding.top + graphHeight);
+        grad.addColorStop(0, s.fillGrad[0]);
+        grad.addColorStop(1, s.fillGrad[1]);
+        ctx.fillStyle = grad;
+        ctx.fill(areaPath);
+        ctx.restore();
+
+        // Stroke line with subtle glow
+        ctx.save();
+        ctx.shadowColor = s.color;
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw point dots
+        pts.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#0f172a';
+          ctx.fill();
+          ctx.strokeStyle = s.color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
+      });
+    }
+
+    // Interactive Hover on Canvas
+    trendCanvas.parentElement.addEventListener('mousemove', (e) => {
+      const rect = trendCanvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Find closest points along X axis
+      const tolerance = 25;
+      const nearbyPoints = canvasPoints.filter(p => Math.abs(p.x - mouseX) <= tolerance);
+
+      if (nearbyPoints.length > 0) {
+        // Group points by day
+        const day = nearbyPoints[0].day;
+        const sameDayPoints = nearbyPoints.filter(p => p.day === day);
+
+        tooltipDate.textContent = `Periode: ${day}`;
+        tooltipContent.innerHTML = sameDayPoints.map(p => `
+          <div class="flex items-center justify-between gap-3 font-mono">
+            <span class="flex items-center gap-1.5" style="color: ${p.color}">
+              <span class="w-2 h-2 rounded-full" style="background-color: ${p.color}"></span>
+              ${p.label}
+            </span>
+            <strong class="text-white">${p.value} pts</strong>
+          </div>
+        `).join('');
+
+        chartTooltip.classList.remove('hidden');
+        const tooltipX = Math.min(Math.max(mouseX + 12, 10), rect.width - 160);
+        const tooltipY = Math.max(mouseY - 45, 10);
+        chartTooltip.style.left = `${tooltipX}px`;
+        chartTooltip.style.top = `${tooltipY}px`;
+      } else {
+        chartTooltip.classList.add('hidden');
+      }
+    });
+
+    trendCanvas.parentElement.addEventListener('mouseleave', () => {
+      chartTooltip.classList.add('hidden');
+    });
+
+    // Graph Toggle Listeners with updated styling state
+    function updateGraphToggleUI() {
+      // Foto (Rose)
+      if (graphSeriesVisible.foto) {
+        toggleGraphFoto.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 transition cursor-pointer select-none";
+      } else {
+        toggleGraphFoto.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-slate-400 transition cursor-pointer select-none opacity-60";
+      }
+
+      // Vector (Amber)
+      if (graphSeriesVisible.vector) {
+        toggleGraphVector.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 transition cursor-pointer select-none";
+      } else {
+        toggleGraphVector.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-slate-400 transition cursor-pointer select-none opacity-60";
+      }
+
+      // Video (Cyan)
+      if (graphSeriesVisible.video) {
+        toggleGraphVideo.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 transition cursor-pointer select-none";
+      } else {
+        toggleGraphVideo.className = "flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-slate-400 transition cursor-pointer select-none opacity-60";
+      }
+    }
+
+    toggleGraphFoto.addEventListener('click', () => {
+      graphSeriesVisible.foto = !graphSeriesVisible.foto;
+      updateGraphToggleUI();
+      renderTrendChart();
+    });
+
+    toggleGraphVector.addEventListener('click', () => {
+      graphSeriesVisible.vector = !graphSeriesVisible.vector;
+      updateGraphToggleUI();
+      renderTrendChart();
+    });
+
+    toggleGraphVideo.addEventListener('click', () => {
+      graphSeriesVisible.video = !graphSeriesVisible.video;
+      updateGraphToggleUI();
+      renderTrendChart();
+    });
+
+    window.addEventListener('resize', () => {
+      renderTrendChart();
+    });
+
+    function updateDateLabel() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+      todayDateLabel.textContent = `Market Date: ${now.toLocaleDateString('id-ID', options)}`;
+    }
+    updateDateLabel();
+
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 2500);
+    }
+
+    function renderTrends() {
+      trendsGrid.innerHTML = '';
+      const sourceObj = multiSourceData[currentSourceKey];
+      sourceBannerText.innerHTML = `Menampilkan tren resmi dari <strong>${sourceObj.name}</strong>. ${sourceObj.description}`;
+
+      // Refresh dynamic chart when source switches
+      renderTrendChart();
+
+      const items = sourceObj[currentCategoryKey] || [];
+
+      // Filter by search & type
+      const filtered = items.filter(item => {
+        const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.keywords.some(k => k.toLowerCase().includes(searchQuery.toLowerCase()));
+        
+        const matchesType = (selectedFilter === 'all') || (item.type === selectedFilter);
+
+        return matchesSearch && matchesType;
+      });
+
+      if (filtered.length === 0) {
+        trendsGrid.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-500 bg-slate-900/40 rounded-2xl border border-slate-800">
+            <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 text-slate-600"></i>
+            <p class="text-sm font-medium">Tidak ada trend yang cocok dengan filter atau kata pencarian.</p>
+            <button onclick="resetFilters()" class="mt-3 text-xs text-rose-400 hover:underline">Reset Pencarian</button>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      filtered.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = "group relative rounded-2xl bg-gradient-to-b from-[#161922] to-[#12141a] border border-slate-800/90 hover:border-slate-700 p-5 transition-all duration-200 hover:shadow-xl hover:shadow-black/40 flex flex-col justify-between";
+
+        // Badges config
+        let typeBadgeClass = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+        let typeIcon = "flame";
+        if (item.type === "Evergreen") {
+          typeBadgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+          typeIcon = "trees";
+        } else if (item.type === "Seasonal") {
+          typeBadgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+          typeIcon = "calendar";
+        }
+
+        // Rank Shift Formatting
+        let rankShiftBadge = '';
+        if (item.rankShift === 'new') {
+          rankShiftBadge = `
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30" title="Baru masuk Top 10 hari ini">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400 mr-1 animate-pulse"></span> BARU MASUK
+            </span>
+          `;
+        } else if (typeof item.rankShift === 'number') {
+          if (item.rankShift > 0) {
+            rankShiftBadge = `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" title="Naik ${item.rankShift} peringkat dari kemarin">
+                <i data-lucide="chevron-up" class="w-3.5 h-3.5 stroke-[2.5]"></i> Naik +${item.rankShift} Peringkat
+              </span>
+            `;
+          } else if (item.rankShift < 0) {
+            rankShiftBadge = `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30" title="Turun ${Math.abs(item.rankShift)} peringkat dari kemarin">
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 stroke-[2.5]"></i> Turun ${item.rankShift} Peringkat
+              </span>
+            `;
+          } else {
+            rankShiftBadge = `
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700" title="Peringkat stabil sama dengan kemarin">
+                <i data-lucide="minus" class="w-3.5 h-3.5 mr-0.5"></i> Tetap
+              </span>
+            `;
+          }
+        }
+
+        // Streak Days Badge
+        const strikeBadge = `
+          <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30" title="Bertahan ${item.strikeDays} hari berturut-turut di tren">
+            <i data-lucide="flame" class="w-3 h-3 text-amber-400 mr-1"></i> ${item.strikeDays} Hari Strike
+          </span>
+        `;
+
+        // Keywords joined for copying
+        const keywordCommaString = item.keywords.join(', ');
+
+        // Determine Adobe filter query type
+        let contentTypeFilter = 'photo';
+        if (currentCategoryKey === 'video') {
+          contentTypeFilter = 'video';
+        } else if (currentCategoryKey === 'image') {
+          contentTypeFilter = 'illustration';
+        }
+
+        card.innerHTML = `
+          <div class="space-y-4">
+            <!-- Header Row with Rank, Title, Strike and Rank Movement -->
+            <div class="space-y-2">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center space-x-2.5">
+                  <span class="flex items-center justify-center w-7 h-7 rounded-lg bg-slate-800 text-xs font-black ${item.rank <= 3 ? 'text-amber-400 border border-amber-500/30' : 'text-slate-400'}">
+                    #${item.rank}
+                  </span>
+                  <div>
+                    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">${item.category}</span>
+                    <h3 class="text-base font-bold text-white group-hover:text-rose-400 transition-colors leading-snug">${item.title}</h3>
+                  </div>
+                </div>
+                <span class="shrink-0 inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${typeBadgeClass}">
+                  <i data-lucide="${typeIcon}" class="w-3 h-3 mr-0.5"></i>
+                  <span>${item.type}</span>
+                </span>
+              </div>
+
+              <!-- Strike Days & Rank Movement Badges -->
+              <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800/60">
+                <span class="text-[10px] text-slate-500 font-medium">Metrik Performa:</span>
+                ${strikeBadge}
+                <span class="text-slate-700">|</span>
+                ${rankShiftBadge}
+              </div>
+            </div>
+
+            <!-- Commercial Metrics Row -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-900/90 rounded-xl p-2.5 border border-slate-800/80 text-[11px]">
+              <div>
+                <span class="text-slate-500 block text-[10px]">Buyer Demand</span>
+                <span class="font-bold text-emerald-400 flex items-center gap-1">
+                  <i data-lucide="trending-up" class="w-3 h-3"></i> ${item.demandScore}/100
+                </span>
+              </div>
+              <div>
+                <span class="text-slate-500 block text-[10px]">Tingkat Persaingan</span>
+                <span class="font-medium text-slate-300">${item.competition}</span>
+              </div>
+              <div class="col-span-2 sm:col-span-1">
+                <span class="text-slate-500 block text-[10px]">Format Ideal</span>
+                <span class="font-medium text-indigo-300 truncate block">${item.suggestedRatio}</span>
+              </div>
+            </div>
+
+            <!-- Analysis Description -->
+            <div class="space-y-1.5 text-xs">
+              <div class="text-slate-300 leading-relaxed">
+                <strong class="text-slate-200">Kenapa Sangat Laku:</strong> ${item.whyItSells}
+              </div>
+              <div class="text-[11px] text-slate-400">
+                <span class="text-slate-500 font-medium">Target Pembeli:</span> ${item.buyerIntent}
+              </div>
+            </div>
+
+            <!-- Top 10 Keywords Preview -->
+            <div class="space-y-1.5 pt-1">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-slate-400 font-semibold flex items-center gap-1">
+                  <i data-lucide="tag" class="w-3 h-3 text-rose-400"></i>
+                  10 Top Metadata Keywords (Prioritas Index):
+                </span>
+                <button onclick="copyKeywords('${encodeURIComponent(keywordCommaString)}')" class="text-[10px] text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1">
+                  <i data-lucide="copy" class="w-2.5 h-2.5"></i> Salin Semua
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-1 max-h-20 overflow-y-auto custom-scrollbar">
+                ${item.keywords.map((kw, i) => `
+                  <span class="px-2 py-0.5 rounded-md bg-slate-800/90 text-slate-300 text-[10px] font-mono border border-slate-700/60">
+                    <span class="text-slate-500 font-bold">${i+1}.</span> ${kw}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="pt-4 mt-4 border-t border-slate-800/70 flex items-center justify-between gap-2">
+            <button onclick="openAiPrompt('${encodeURIComponent(item.prompt)}')" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition">
+              <i data-lucide="wand-2" class="w-3.5 h-3.5 text-rose-400"></i>
+              <span>Prompt AI</span>
+            </button>
+
+            <a href="https://stock.adobe.com/search?k=${encodeURIComponent(item.adobeQuery)}&filters%5Bcontent_type%3A${contentTypeFilter}%5D=1&order=nb_downloads" 
+               target="_blank" rel="noopener noreferrer" 
+               class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-semibold shadow-sm transition">
+              <span>Cek di Adobe Stock</span>
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </a>
+          </div>
+        `;
+        trendsGrid.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    window.copyKeywords = function(encodedStr) {
+      const text = decodeURIComponent(encodedStr);
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = text;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+      showToast('10 Keywords berhasil disalin dalam urutan prioritas!');
+    };
+
+    window.openAiPrompt = function(encodedPrompt) {
+      const prompt = decodeURIComponent(encodedPrompt);
+      aiPromptContent.textContent = prompt;
+      aiPromptModal.classList.remove('hidden');
+      aiPromptModal.classList.add('flex');
+    };
+
+    window.resetFilters = function() {
+      searchInput.value = '';
+      searchQuery = '';
+      filterType.value = 'all';
+      selectedFilter = 'all';
+      renderTrends();
+    };
+
+    // Source Selection Handlers
+    function updateSourceTabUI() {
+      const activeClass = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-rose-600 text-white shadow-sm whitespace-nowrap shrink-0";
+      const inactiveClass = "flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition whitespace-nowrap shrink-0";
+
+      srcBtnA.className = currentSourceKey === 'sourceA' ? activeClass : inactiveClass;
+      srcBtnB.className = currentSourceKey === 'sourceB' ? activeClass : inactiveClass;
+      srcBtnC.className = currentSourceKey === 'sourceC' ? activeClass : inactiveClass;
+    }
+
+    srcBtnA.addEventListener('click', () => {
+      currentSourceKey = 'sourceA';
+      updateSourceTabUI();
+      renderTrends();
+    });
+
+    srcBtnB.addEventListener('click', () => {
+      currentSourceKey = 'sourceB';
+      updateSourceTabUI();
+      renderTrends();
+    });
+
+    srcBtnC.addEventListener('click', () => {
+      currentSourceKey = 'sourceC';
+      updateSourceTabUI();
+      renderTrends();
+    });
+
+    // Category Handlers (Foto, Image, Video)
+    function updateCategoryTabUI() {
+      const activeClass = "flex items-center justify-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs font-semibold transition bg-rose-600 text-white shadow-sm truncate";
+      const inactiveClass = "flex items-center justify-center space-x-1.5 sm:space-x-2 px-2.5 sm:px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition truncate";
+
+      tabFoto.className = currentCategoryKey === 'foto' ? activeClass : inactiveClass;
+      tabImage.className = currentCategoryKey === 'image' ? activeClass : inactiveClass;
+      tabVideo.className = currentCategoryKey === 'video' ? activeClass : inactiveClass;
+    }
+
+    tabFoto.addEventListener('click', () => {
+      currentCategoryKey = 'foto';
+      updateCategoryTabUI();
+      renderTrends();
+    });
+
+    tabImage.addEventListener('click', () => {
+      currentCategoryKey = 'image';
+      updateCategoryTabUI();
+      renderTrends();
+    });
+
+    tabVideo.addEventListener('click', () => {
+      currentCategoryKey = 'video';
+      updateCategoryTabUI();
+      renderTrends();
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderTrends();
+    });
+
+    filterType.addEventListener('change', (e) => {
+      selectedFilter = e.target.value;
+      renderTrends();
+    });
+
+    // Gemini API Trend Synchronization function with Search Grounding
+    async function syncTrendsFromGemini() {
+      syncIcon.classList.add('animate-spin');
+      syncTrendsBtn.disabled = true;
+      syncText.textContent = "Scanning...";
+      loadingState.classList.remove('hidden');
+      trendsGrid.classList.add('hidden');
+
+      try {
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+        const systemPrompt = `You are an elite microstock commercial researcher and SEO metadata expert for Adobe Stock. 
+Provide real-time market data in valid JSON only with exactly 10 trends for Foto, 10 for Vector/Image, and 10 for Video for Source A, B, and C. Output ONLY raw unformatted JSON without markdown code fences, backticks, or explanatory text.`;
+
+        const userQuery = `Search current microstock visual trends, high-demand commercial topics, and best-selling assets on Adobe Stock today. Provide top 10 trends for photo (foto), vector (image), and video across Source A, B, and C. Return only JSON schema conforming to multiSourceData structure with keys "sourceA", "sourceB", "sourceC", each containing arrays "foto", "image", "video".`;
+
+        const payload = {
+          contents: [{ parts: [{ text: userQuery }] }],
+          tools: [{ "google_search": {} }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          generationConfig: {
+            responseMimeType: "application/json"
+          }
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        let rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (rawText) {
+          // Robust JSON sanitization: strip markdown code blocks and find exact JSON bounds
+          let cleanJson = rawText.trim();
+          
+          // Remove leading ```json or ``` and trailing ```
+          cleanJson = cleanJson.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+          
+          // Locate first { and last } to discard any extraneous commentary
+          const firstBrace = cleanJson.indexOf('{');
+          const lastBrace = cleanJson.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+            cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+          }
+
+          const parsed = JSON.parse(cleanJson);
+          ['sourceA', 'sourceB', 'sourceC'].forEach(src => {
+            if (parsed[src]) {
+              if (Array.isArray(parsed[src].foto) && parsed[src].foto.length > 0) {
+                multiSourceData[src].foto = parsed[src].foto;
+              }
+              if (Array.isArray(parsed[src].image) && parsed[src].image.length > 0) {
+                multiSourceData[src].image = parsed[src].image;
+              }
+              if (Array.isArray(parsed[src].video) && parsed[src].video.length > 0) {
+                multiSourceData[src].video = parsed[src].video;
+              }
+            }
+          });
+          showToast("Sukses memperbarui data tren untuk Sumber A, B, & C!");
+        }
+      } catch (err) {
+        console.error("Gagal sinkronisasi data Gemini:", err);
+        showToast("Menampilkan data komersial terverifikasi saat ini.");
+      } finally {
+        syncIcon.classList.remove('animate-spin');
+        syncTrendsBtn.disabled = false;
+        syncText.textContent = "Update AI";
+        loadingState.classList.add('hidden');
+        trendsGrid.classList.remove('hidden');
+        renderTrends();
+      }
+    }
+
+    syncTrendsBtn.addEventListener('click', syncTrendsFromGemini);
+
+    // Modal listeners
+    dataSourceInfoBtn.addEventListener('click', () => {
+      dataSourceModal.classList.remove('hidden');
+      dataSourceModal.classList.add('flex');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      dataSourceModal.classList.add('hidden');
+      dataSourceModal.classList.remove('flex');
+    });
+
+    gotItBtn.addEventListener('click', () => {
+      dataSourceModal.classList.add('hidden');
+      dataSourceModal.classList.remove('flex');
+    });
+
+    closeAiModalBtn.addEventListener('click', () => {
+      aiPromptModal.classList.add('hidden');
+      aiPromptModal.classList.remove('flex');
+    });
+
+    copyPromptBtn.addEventListener('click', () => {
+      const text = aiPromptContent.textContent;
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = text;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+      showToast('Prompt AI berhasil disalin!');
+      aiPromptModal.classList.add('hidden');
+      aiPromptModal.classList.remove('flex');
+    });
+
+    // Close modal when clicked outside
+    window.addEventListener('click', (e) => {
+      if (e.target === dataSourceModal) {
+        dataSourceModal.classList.add('hidden');
+        dataSourceModal.classList.remove('flex');
+      }
+      if (e.target === aiPromptModal) {
+        aiPromptModal.classList.add('hidden');
+        aiPromptModal.classList.remove('flex');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateSourceTabUI();
+      updateCategoryTabUI();
+      updateGraphToggleUI();
+      renderTrends();
+      renderTrendChart();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
