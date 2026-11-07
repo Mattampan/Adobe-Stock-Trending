@@ -189,6 +189,11 @@
             <option value="Evergreen">🌲 Evergreen</option>
             <option value="Seasonal">🍂 Seasonal</option>
           </select>
+          <select id="filterOpportunity" class="bg-slate-900/80 border border-slate-800 text-xs rounded-lg px-2 py-1.5 text-slate-300 focus:outline-none focus:border-rose-500 shrink-0">
+            <option value="all">Semua Peluang</option>
+            <option value="golden">🟢 Golden (>85)</option>
+            <option value="high">🟡 High (70-85)</option>
+          </select>
         </div>
       </div>
     </div>
@@ -353,32 +358,195 @@
     </div>
   </div>
 
-  <div id="aiPromptModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-    <div class="bg-[#14171f] border border-slate-800 rounded-2xl max-w-xl w-full p-4 sm:p-5 space-y-3.5 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-        <div class="flex items-center space-x-2">
-          <i data-lucide="wand-2" class="w-4 h-4 text-rose-500"></i>
-          <h3 class="text-xs sm:text-sm font-bold text-white">AI Image / Video Prompt</h3>
+  <!-- Enhanced AI Prompt Modal with Multi-Engine Tabs & Technical Specs -->
+  <div id="aiPromptModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[#131620] border border-slate-800 rounded-2xl max-w-2xl w-full p-4 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] flex flex-col custom-scrollbar overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <div class="p-2 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-500 text-white shadow-md shadow-rose-900/40">
+            <i data-lucide="wand-2" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 class="text-sm sm:text-base font-bold text-white" id="modalPromptTitle">Detailed AI Production Prompt</h3>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-semibold border border-emerald-500/25">Commercial Standard</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Dirancang khusus agar bebas dari penolakan kurator Adobe Stock (Artefak, Watermark, Anatomi).</p>
+          </div>
         </div>
-        <button id="closeAiModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-          <i data-lucide="x" class="w-4 h-4"></i>
+        <button id="closeAiModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <div class="space-y-2">
-        <p class="text-[11px] text-slate-400">Prompt siap pakai untuk Adobe Firefly, Midjourney, atau Runway:</p>
-        <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
-          <p id="aiPromptContent" class="text-[11px] text-slate-200 leading-relaxed font-mono select-all break-words">
-            Loading prompt...
+      <!-- Step 1: Engine Selector Tabs -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between">
+          <label class="text-[10px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-[10px] font-mono">1</span>
+            Pilih Jenis AI Generator:
+          </label>
+          <span class="text-[10px] text-slate-400">Syntax & parameter otomatis disesuaikan</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-900/90 rounded-xl border border-slate-800 text-xs">
+          <button id="tabFirefly" class="flex items-center justify-center space-x-1.5 py-1.5 px-2 rounded-lg font-semibold bg-rose-600 text-white transition truncate">
+            <i data-lucide="bot" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="truncate">ChatGPT (DALL-E 3)</span>
+          </button>
+          <button id="tabMidjourney" class="flex items-center justify-center space-x-1.5 py-1.5 px-2 rounded-lg font-semibold text-slate-400 hover:text-white transition truncate">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="truncate">Gemini (Imagen 3)</span>
+          </button>
+          <button id="tabVideoAI" class="flex items-center justify-center space-x-1.5 py-1.5 px-2 rounded-lg font-semibold text-slate-400 hover:text-white transition truncate">
+            <i data-lucide="video" class="w-3.5 h-3.5 shrink-0"></i>
+            <span class="truncate">Google Veo 3</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Multiple Idea Variants Tabs (Variasi 1, 2, 3) -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between">
+          <label class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px] font-mono">2</span>
+            Pilih Ide Prompt & Angle Kamera:
+          </label>
+          <span class="text-[10px] text-slate-400">Kata kunci akan disinkronkan ke ide ini</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 text-[11px]">
+          <button id="varIdea1" class="flex items-center justify-center space-x-1 py-1 px-2 rounded-lg font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 transition truncate">
+            <span>Variasi 1: Hero Angle</span>
+          </button>
+          <button id="varIdea2" class="flex items-center justify-center space-x-1 py-1 px-2 rounded-lg font-medium text-slate-400 hover:text-white transition truncate">
+            <span>Variasi 2: Copy-Space</span>
+          </button>
+          <button id="varIdea3" class="flex items-center justify-center space-x-1 py-1 px-2 rounded-lg font-medium text-slate-400 hover:text-white transition truncate">
+            <span>Variasi 3: Macro Action</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Prompt & Keyword Content -->
+      <div class="space-y-3.5 overflow-y-auto pr-1 custom-scrollbar text-xs">
+        <!-- Step 3: Main Prompt Box -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-bold text-slate-300 flex items-center gap-1.5">
+              <span class="w-4 h-4 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-[10px] font-mono">3</span>
+              Generated Production Prompt:
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono" id="promptWordCount">Commercial Grade</span>
+          </div>
+          <div class="p-3 bg-slate-950/90 border border-slate-800 rounded-xl relative group">
+            <p id="aiPromptContent" class="text-[11px] sm:text-xs text-slate-200 leading-relaxed font-mono select-all break-words">
+              Loading prompt specifications...
+            </p>
+          </div>
+        </div>
+
+        <!-- Technical Breakdown Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+          <!-- Optics & Setup -->
+          <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800/80 space-y-1">
+            <span class="text-[10px] font-bold text-amber-400 flex items-center gap-1">
+              <i data-lucide="camera" class="w-3 h-3"></i> Kamera, Lensa & Lighting:
+            </span>
+            <p id="modalOpticsSpec" class="text-slate-300 text-[10px] leading-relaxed">
+              Sony A7R V, 50mm f/1.4 GM lens, soft morning diffusion, natural warm backlight.
+            </p>
+          </div>
+
+          <!-- Composition & Copy Space -->
+          <div class="p-2.5 rounded-xl bg-slate-900/70 border border-slate-800/80 space-y-1">
+            <span class="text-[10px] font-bold text-cyan-400 flex items-center gap-1">
+              <i data-lucide="layout-template" class="w-3 h-3"></i> Composition & Negative Space:
+            </span>
+            <p id="modalCompositionSpec" class="text-slate-300 text-[10px] leading-relaxed">
+              Rule of thirds, generous negative copy-space for text overlay on right side.
+            </p>
+          </div>
+        </div>
+
+        <!-- Negative Prompt / Rejection Guardrail -->
+        <div class="p-2.5 rounded-xl bg-rose-950/20 border border-rose-900/30 space-y-1">
+          <span class="text-[10px] font-bold text-rose-400 flex items-center gap-1">
+            <i data-lucide="shield-alert" class="w-3 h-3 text-rose-400"></i>
+            Negative Prompt (Wajib Diinput agar Lolos Review Adobe):
+          </span>
+          <p id="modalNegativePrompt" class="text-[10px] text-rose-200/90 font-mono leading-relaxed select-all">
+            deformed fingers, extra limbs, unnatural skin smoothing, fake plastic look, distorted eyes, blurry, text, trademark, copyrighted logo, watermark, signature, artifacts, grain, noise, low resolution.
           </p>
         </div>
+
+        <!-- Step 4: Full 49 Keywords Architecture (10 Golden + 39 Supporting) -->
+        <div class="p-3 rounded-xl bg-slate-950/90 border border-slate-800 space-y-2.5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+            <div class="flex items-center space-x-2">
+              <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-mono font-bold">4</span>
+              <div>
+                <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="tags" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  Saran 49 Kata Kunci Sesuai Ide Prompt & Algoritma Adobe
+                </h4>
+                <p class="text-[10px] text-slate-400 leading-tight">10 Kata kunci pertama berbobot ranking 80% di Adobe Stock + 39 pendamping relevan.</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-1.5 shrink-0">
+              <button id="copyTop10KeywordsBtn" class="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-semibold transition flex items-center gap-1">
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                <span>Salin 10 Utama</span>
+              </button>
+              <button id="copyAll49KeywordsBtn" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[10px] font-bold shadow-sm transition flex items-center gap-1">
+                <i data-lucide="clipboard-list" class="w-3 h-3"></i>
+                <span>Salin Semua 49</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 10 Golden Priority Keywords Box -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="font-bold text-emerald-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Slot 1–10: Golden Priority Keywords (Penentu Ranking Utama):
+              </span>
+              <span class="text-slate-500 font-mono">Bobot Tinggi (Indexing 1-10)</span>
+            </div>
+            <div id="modalTop10Keywords" class="flex flex-wrap gap-1 p-2 rounded-lg bg-emerald-950/20 border border-emerald-500/30">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- 39 Supporting Keywords Box -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[10px]">
+              <span class="font-semibold text-slate-400 flex items-center gap-1">
+                <i data-lucide="hash" class="w-3 h-3 text-slate-500"></i>
+                Slot 11–49: Supporting & Contextual Keywords (Variasi & Niche):
+              </span>
+              <span class="text-slate-500 font-mono">Maks. 49 Standar Adobe</span>
+            </div>
+            <div id="modalSupportingKeywords" class="flex flex-wrap gap-1 p-2 rounded-lg bg-slate-900/60 border border-slate-800 max-h-28 overflow-y-auto custom-scrollbar">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="flex items-center justify-end pt-1">
-        <button id="copyPromptBtn" class="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-semibold transition">
-          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-          <span>Salin Prompt</span>
-        </button>
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+        <span class="text-[10px] text-slate-500 hidden sm:inline">Urutan kata kunci di atas sudah siap langsung ditempel ke CSV / Metadata Adobe Stock Contributor.</span>
+        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+          <button id="copyPromptOnlyBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>Salin Prompt</span>
+          </button>
+          <button id="copyPromptBtn" class="flex items-center space-x-1.5 px-4 py-1.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-rose-900/30 transition">
+            <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+            <span>Salin Lengkap (Prompt + Negatif)</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -411,6 +579,11 @@
             type: "Breakout",
             demandScore: 98,
             competition: "Sedang",
+            opportunityScore: 92, // [1] Opportunity Index
+            uploadWindow: "Immediate / Evergreen", // [2] Seasonal Upload Window
+            licenseTier: "Enterprise / Extended", // [6] Licensing Yield Tier
+            longTailPower: "Very High (Low Density)", // [7] Long Tail Keyword Efficiency
+            topLongTail: ["female radiologist tablet ai", "clinical diagnostic screen hospital", "ai healthcare dashboard doctor"],
             buyerIntent: "Rumah sakit, SaaS rekam medis, asuransi, annual report kesehatan",
             whyItSells: "Permintaan visual dokter berinteraksi dengan tablet/layar AI diagnostik tanpa terlihat sci-fi murahan. Estetika bersih dan higienis.",
             keywords: ["ai healthcare", "doctor tablet", "digital medicine", "diagnostics", "radiology ai", "future hospital", "medical technology", "telemedicine", "data analytics", "clinical research"],
@@ -427,6 +600,11 @@
             type: "Evergreen",
             demandScore: 94,
             competition: "Tinggi",
+            opportunityScore: 74,
+            uploadWindow: "Evergreen (All Year)",
+            licenseTier: "High Volume Subscription",
+            longTailPower: "Moderate (High Volume)",
+            topLongTail: ["authentic father working laptop kid", "scandinavian ergonomic home office", "natural morning remote freelancer"],
             buyerIntent: "Bank digital, platform remote HR, software kolaborasi",
             whyItSells: "Pembeli menghindari foto kantor kaku. Mereka mencari momen realistis orang bekerja dari rumah dengan cahaya natural lembut.",
             keywords: ["remote work", "work from home", "father laptop", "authentic lifestyle", "freelance", "modern living room", "parenting multitasking", "ergonomic home office", "cozy lifestyle", "video call"],
@@ -443,6 +621,11 @@
             type: "Evergreen",
             demandScore: 92,
             competition: "Rendah",
+            opportunityScore: 94,
+            uploadWindow: "Q1-Q2 ESG Reporting Window",
+            licenseTier: "Enterprise / Extended",
+            longTailPower: "Very High (Low Density)",
+            topLongTail: ["solar technician inspection sunset wide", "esg renewable energy engineer hardhat", "photovoltaic field maintenance corporate"],
             buyerIntent: "Laporan ESG korporat, kementerian energi, investor green bonds",
             whyItSells: "Regulasi sustainability global mewajibkan jutaan perusahaan mempublikasikan ESG report tiap kuartal.",
             keywords: ["solar panels", "clean energy", "wind turbine", "solar engineer", "green economy", "sustainability", "renewable energy", "esg report", "future power", "technician inspection"],
@@ -459,6 +642,11 @@
             type: "Breakout",
             demandScore: 95,
             competition: "Sedang",
+            opportunityScore: 88,
+            uploadWindow: "Cyber Awareness Peak (Upload Now)",
+            licenseTier: "Enterprise On-Demand",
+            longTailPower: "High",
+            topLongTail: ["biometric fingerprint security server dark", "modern data privacy encryption lock", "cloud network firewall room"],
             buyerIntent: "Fintech perbankan, IT security company, cloud platform",
             whyItSells: "Visual keamanan data modern dengan pencahayaan neon/server room bersih yang elegan.",
             keywords: ["cybersecurity", "data privacy", "cloud security", "firewall", "biometric scan", "server room", "digital encryption", "network defense", "secure access", "fingerprint scanner"],
@@ -475,6 +663,11 @@
             type: "Evergreen",
             demandScore: 89,
             competition: "Tinggi",
+            opportunityScore: 71,
+            uploadWindow: "Evergreen / Spring Campaign",
+            licenseTier: "Commercial Extended",
+            longTailPower: "Moderate",
+            topLongTail: ["travertine stone cosmetic dropper mockup", "unbranded amber glass skincare negative space", "clean organic beauty blank label"],
             buyerIntent: "Brand skincare, desainer kemasan, mockup presentasi portofolio",
             whyItSells: "Foto produk kosmetik tanpa label dengan podium batu travertin dan bayangan tanaman. Ruang kosong (negative space) luas sangat disukai desainer.",
             keywords: ["cosmetic mockup", "blank bottle", "skincare pump", "organic packaging", "minimalist stone podium", "clean beauty", "empty label", "dropper bottle", "natural light", "spa aesthetic"],
@@ -491,6 +684,11 @@
             type: "Breakout",
             demandScore: 88,
             competition: "Rendah",
+            opportunityScore: 89,
+            uploadWindow: "New Year / Wellness Reset",
+            licenseTier: "Standard Subscription",
+            longTailPower: "High",
+            topLongTail: ["morning journaling mindfulness ceramic mug", "peaceful digital detox sunlight floor", "mental wellness breathing calm"],
             buyerIntent: "Aplikasi meditasi, HR wellness program, asuransi kesehatan",
             whyItSells: "Pergeseran fokus perusahaan ke pencegahan burnout karyawan. Kebutuhan foto journaling dan relaksasi pagi melonjak.",
             keywords: ["mental wellness", "mindfulness", "journaling", "digital detox", "stress relief", "breathing exercise", "self care", "indoor plants", "peaceful morning", "calm lifestyle"],
@@ -507,6 +705,11 @@
             type: "Breakout",
             demandScore: 92,
             competition: "Sangat Rendah",
+            opportunityScore: 96,
+            uploadWindow: "Financial Literacy Campaign (Upload Now)",
+            licenseTier: "Enterprise / Banking Extended",
+            longTailPower: "Very High (Undersupplied)",
+            topLongTail: ["active elderly couple online banking cafe", "happy retired smartphone payment smiling", "senior digital wallet authentic modern"],
             buyerIntent: "Bank pensiun, app e-wallet, edukasi inklusi digital",
             whyItSells: "Pasar jenuh foto lansia sakit. Pembeli membutuhkan visual lansia sehat, percaya diri, dan mahir menggunakan smartphone.",
             keywords: ["senior mobile banking", "active elderly", "grandparent smartphone", "digital inclusion", "financial literacy", "happy retired couple", "online shopping", "modern senior", "pension app", "technology adoption"],
@@ -523,6 +726,11 @@
             type: "Seasonal",
             demandScore: 87,
             competition: "Sedang",
+            opportunityScore: 86,
+            uploadWindow: "Food Security / Sustainability Q2",
+            licenseTier: "Enterprise / Editorial",
+            longTailPower: "High",
+            topLongTail: ["vertical farming hydroponics purple led tablet", "agritech engineer checking crisp lettuce", "smart greenhouse organic indoor"],
             buyerIntent: "Start-up agritech, majalah agrikultur, brosur investasi pangan",
             whyItSells: "Greenhouse hidroponik vertikal modern dengan lampu LED spektrum ungu dan petani muda memegang tablet monitor sensor.",
             keywords: ["vertical farming", "smart agriculture", "hydroponics", "agrotech", "farmer tablet", "indoor greenhouse", "led grow lights", "sustainable food", "modern farming", "organic vegetables"],
@@ -539,6 +747,11 @@
             type: "Evergreen",
             demandScore: 93,
             competition: "Sedang",
+            opportunityScore: 85,
+            uploadWindow: "All Year / Clean City Ads",
+            licenseTier: "Commercial Extended",
+            longTailPower: "High",
+            topLongTail: ["hand plugging rapid ev charging cable dusk", "electric vehicle glowing blue led station", "clean mobility modern electric car charging"],
             buyerIntent: "Produsen otomotif, pengelola mall, utilitas listrik",
             whyItSells: "Transisi masif ke kendaraan listrik. Visual pengemudi menancapkan kabel charger cepat selalu laris sepanjang tahun.",
             keywords: ["ev charging", "electric vehicle", "charging station", "clean transportation", "urban mobility", "plugging in car", "modern electric car", "green energy commute", "future city", "sustainability"],
@@ -555,6 +768,11 @@
             type: "Seasonal",
             demandScore: 90,
             competition: "Tinggi",
+            opportunityScore: 78,
+            uploadWindow: "⚠️ Peak Delivery Window (H-45 Ideal)",
+            licenseTier: "Subscription / E-Commerce Ads",
+            longTailPower: "Moderate",
+            topLongTail: ["courier handing parcel red ribbon porch", "holiday doorstep delivery festive warm", "online retail courier box customer"],
             buyerIntent: "E-commerce banner, promosi kurir logistik, kampanye belanja",
             whyItSells: "Kurir mengantarkan paket dengan pita merah ke depan pintu rumah modern. Aset musiman bernilai tinggi menjelang kampanye festival.",
             keywords: ["holiday delivery", "courier parcel", "doorstep delivery", "festive shopping", "online shopping boxes", "gift delivery", "cardboard parcel", "express courier", "happy customer", "winter shopping"],
@@ -1875,6 +2093,7 @@
     let currentCategoryKey = 'foto'; // 'foto' | 'image' | 'video'
     let searchQuery = '';
     let selectedFilter = 'all';
+    let selectedOpportunity = 'all';
 
     // 7-Day Trend Velocity Dataset for Source A, B, and C
     const dailyVelocityData = {
@@ -1918,6 +2137,7 @@
     const trendsGrid = document.getElementById('trendsGrid');
     const searchInput = document.getElementById('searchInput');
     const filterType = document.getElementById('filterType');
+    const filterOpportunity = document.getElementById('filterOpportunity');
     const loadingState = document.getElementById('loadingState');
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toastMessage');
@@ -1945,6 +2165,26 @@
     const closeAiModalBtn = document.getElementById('closeAiModalBtn');
     const aiPromptContent = document.getElementById('aiPromptContent');
     const copyPromptBtn = document.getElementById('copyPromptBtn');
+    const copyPromptOnlyBtn = document.getElementById('copyPromptOnlyBtn');
+    const modalPromptTitle = document.getElementById('modalPromptTitle');
+    const modalOpticsSpec = document.getElementById('modalOpticsSpec');
+    const modalCompositionSpec = document.getElementById('modalCompositionSpec');
+    const modalNegativePrompt = document.getElementById('modalNegativePrompt');
+    const tabFirefly = document.getElementById('tabFirefly');
+    const tabMidjourney = document.getElementById('tabMidjourney');
+    const tabVideoAI = document.getElementById('tabVideoAI');
+    const varIdea1 = document.getElementById('varIdea1');
+    const varIdea2 = document.getElementById('varIdea2');
+    const varIdea3 = document.getElementById('varIdea3');
+    const modalTop10Keywords = document.getElementById('modalTop10Keywords');
+    const modalSupportingKeywords = document.getElementById('modalSupportingKeywords');
+    const copyTop10KeywordsBtn = document.getElementById('copyTop10KeywordsBtn');
+    const copyAll49KeywordsBtn = document.getElementById('copyAll49KeywordsBtn');
+
+    let activePromptItem = null;
+    let currentEngine = 'chatgpt'; // 'chatgpt' | 'gemini' | 'veo3'
+    let currentVariant = 1; // 1 | 2 | 3
+    let generated49KeywordsList = [];
 
     let canvasPoints = []; // Stores plotted coordinates for interactive hover tooltip
 
@@ -2228,7 +2468,15 @@
         
         const matchesType = (selectedFilter === 'all') || (item.type === selectedFilter);
 
-        return matchesSearch && matchesType;
+        const opp = item.opportunityScore || 80;
+        let matchesOpp = true;
+        if (selectedOpportunity === 'golden') {
+          matchesOpp = opp >= 85;
+        } else if (selectedOpportunity === 'high') {
+          matchesOpp = opp >= 70 && opp < 85;
+        }
+
+        return matchesSearch && matchesType && matchesOpp;
       });
 
       if (filtered.length === 0) {
@@ -2295,6 +2543,38 @@
           </span>
         `;
 
+        // Opportunity Score [1]
+        const oppVal = item.opportunityScore || Math.min(99, Math.round((item.demandScore * 1.05) - (item.competition === 'Tinggi' ? 20 : item.competition === 'Sedang' ? 8 : 0)));
+        let oppBadge = '';
+        if (oppVal >= 85) {
+          oppBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1" title="Opportunity Index: Permintaan sangat tinggi namun suplai kompetitor rendah. Prioritas produksi!"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ${oppVal}/100 🟢 Golden Opportunity</span>`;
+        } else if (oppVal >= 70) {
+          oppBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1" title="Opportunity Index: Potensi pasar bagus dengan diferensiasi unik."><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> ${oppVal}/100 🟡 High Potential</span>`;
+        } else {
+          oppBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1" title="Opportunity Index: Pasar cukup padat persaingan."><span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span> ${oppVal}/100 🔴 Competitive</span>`;
+        }
+
+        // Seasonal Upload Window [2]
+        const uploadWindow = item.uploadWindow || (item.type === 'Seasonal' ? 'H-45 Window (Produksi Sekarang)' : 'Evergreen (Sepanjang Tahun)');
+        const uploadWindowBadge = uploadWindow.includes('H-') || uploadWindow.includes('Now') || uploadWindow.includes('Window')
+          ? `<span class="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 truncate"><i data-lucide="clock" class="w-3 h-3 text-rose-400 shrink-0"></i> ${uploadWindow}</span>`
+          : `<span class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 truncate"><i data-lucide="calendar" class="w-3 h-3 text-slate-400 shrink-0"></i> ${uploadWindow}</span>`;
+
+        // Licensing Yield Tier [6]
+        const licenseTier = item.licenseTier || (item.demandScore > 92 && item.competition !== 'Tinggi' ? 'Enterprise / Extended' : 'High Volume Subscription');
+        const isExtended = licenseTier.includes('Enterprise') || licenseTier.includes('Extended');
+        const licenseTierBadge = isExtended
+          ? `<span class="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30 truncate" title="Potensi Extended/Enterprise License: Nilai komisi royalti tinggi ($9-$26+) per unduhan"><i data-lucide="gem" class="w-3 h-3 text-cyan-400 shrink-0"></i> ${licenseTier}</span>`
+          : `<span class="inline-flex items-center gap-1 text-[10px] font-medium text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700 truncate" title="Cocok untuk menaikkan volume akumulasi portofolio harian"><i data-lucide="layers" class="w-3 h-3 text-slate-400 shrink-0"></i> ${licenseTier}</span>`;
+
+        // Long-Tail Exact Keywords [7]
+        const topLongTail = item.topLongTail || [
+          item.keywords.slice(0, 3).join(' '),
+          item.keywords.slice(3, 6).join(' '),
+          item.keywords.slice(6, 9).join(' ')
+        ];
+        const longTailPower = item.longTailPower || (item.competition === 'Rendah' ? 'Very High' : 'High');
+
         // Keywords joined for copying
         const keywordCommaString = item.keywords.join(', ');
 
@@ -2307,7 +2587,7 @@
         }
 
         card.innerHTML = `
-          <div class="space-y-4">
+          <div class="space-y-3.5">
             <!-- Header Row with Rank, Title, Strike and Rank Movement -->
             <div class="space-y-2">
               <div class="flex items-start justify-between gap-3">
@@ -2327,11 +2607,24 @@
               </div>
 
               <!-- Strike Days & Rank Movement Badges -->
-              <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800/60">
-                <span class="text-[10px] text-slate-500 font-medium">Metrik Performa:</span>
+              <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1 border-t border-slate-800/60">
                 ${strikeBadge}
                 <span class="text-slate-700">|</span>
                 ${rankShiftBadge}
+                <span class="text-slate-700">|</span>
+                ${oppBadge}
+              </div>
+            </div>
+
+            <!-- Commercial Accuracy Indicators [1, 2, 6] -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 rounded-xl bg-slate-900/60 border border-slate-800/80">
+              <div class="flex flex-col gap-1 min-w-0">
+                <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Jendela Waktu Unggah (Lead Time):</span>
+                ${uploadWindowBadge}
+              </div>
+              <div class="flex flex-col gap-1 min-w-0">
+                <span class="text-[9px] uppercase tracking-wider font-semibold text-slate-500">Prediksi Royalti & Lisensi:</span>
+                ${licenseTierBadge}
               </div>
             </div>
 
@@ -2363,71 +2656,356 @@
               </div>
             </div>
 
+            <!-- [7] High Conversion Long-Tail Keywords Box -->
+            <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/90 space-y-1.5">
+              <div class="flex items-center justify-between text-[11px]">
+                <span class="text-amber-400 font-bold flex items-center gap-1">
+                  <i data-lucide="target" class="w-3 h-3 text-amber-400"></i>
+                  Exact Long-Tail Keywords (Konversi Tertinggi):
+                </span>
+                <span class="text-[10px] text-slate-400 font-mono">Efisiensi: <strong class="text-emerald-400">${longTailPower}</strong></span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                ${topLongTail.map(phrase => `
+                  <span class="px-2 py-0.5 rounded bg-slate-900 text-amber-200/90 text-[10px] font-mono border border-amber-500/25 flex items-center gap-1 cursor-pointer hover:bg-slate-800" onclick="copyKeywords('${encodeURIComponent(phrase)}')" title="Klik untuk salin frasa ini">
+                    <i data-lucide="copy" class="w-2.5 h-2.5 text-amber-400"></i> "${phrase}"
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+
             <!-- Top 10 Keywords Preview -->
             <div class="space-y-1.5 pt-1">
               <div class="flex items-center justify-between text-[11px]">
                 <span class="text-slate-400 font-semibold flex items-center gap-1">
                   <i data-lucide="tag" class="w-3 h-3 text-rose-400"></i>
-                  10 Top Metadata Keywords (Prioritas Index):
+                  Top 10 Keywords (Algoritma Index):
                 </span>
-                <button onclick="copyKeywords('${encodeURIComponent(keywordCommaString)}')" class="text-[10px] text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1">
-                  <i data-lucide="copy" class="w-2.5 h-2.5"></i> Salin Semua
+                <button onclick="copyKeywords('${encodeURIComponent(keywordCommaString)}')" class="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-medium transition cursor-pointer">
+                  <i data-lucide="copy" class="w-3 h-3"></i>
+                  <span>Salin Semua</span>
                 </button>
               </div>
-              <div class="flex flex-wrap gap-1 max-h-20 overflow-y-auto custom-scrollbar">
+              <div class="flex flex-wrap gap-1">
                 ${item.keywords.map((kw, i) => `
-                  <span class="px-2 py-0.5 rounded-md bg-slate-800/90 text-slate-300 text-[10px] font-mono border border-slate-700/60">
-                    <span class="text-slate-500 font-bold">${i+1}.</span> ${kw}
+                  <span class="px-2 py-0.5 rounded text-[10px] ${i < 3 ? 'bg-rose-500/15 text-rose-300 border border-rose-500/25 font-bold' : 'bg-slate-800 text-slate-300 border border-slate-700/80'}">
+                    #${i + 1} ${kw}
                   </span>
                 `).join('')}
               </div>
             </div>
           </div>
 
-          <!-- Bottom Action Buttons -->
-          <div class="pt-4 mt-4 border-t border-slate-800/70 flex items-center justify-between gap-2">
-            <button onclick="openAiPrompt('${encodeURIComponent(item.prompt)}')" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition">
-              <i data-lucide="wand-2" class="w-3.5 h-3.5 text-rose-400"></i>
-              <span>Prompt AI</span>
+          <!-- Bottom Action Buttons inside Card -->
+          <div class="pt-3.5 mt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+            <button onclick="openDetailedAiPrompt(${item.rank})" class="flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition active:scale-95">
+              <i data-lucide="wand-2" class="w-3.5 h-3.5 text-amber-400 shrink-0"></i>
+              <span class="truncate">Prompt AI (3 Ide)</span>
             </button>
-
-            <a href="https://stock.adobe.com/search?k=${encodeURIComponent(item.adobeQuery)}&filters%5Bcontent_type%3A${contentTypeFilter}%5D=1&order=nb_downloads" 
-               target="_blank" rel="noopener noreferrer" 
-               class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-semibold shadow-sm transition">
-              <span>Cek di Adobe Stock</span>
-              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            <a href="https://stock.adobe.com/search?k=${encodeURIComponent(item.adobeQuery)}&filters[content_type:${contentTypeFilter}]=1&order=nb_downloads" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-3 rounded-xl bg-brand-600/20 hover:bg-brand-600/30 text-rose-300 text-xs font-semibold border border-rose-500/30 transition active:scale-95 truncate">
+              <i data-lucide="external-link" class="w-3.5 h-3.5 shrink-0"></i>
+              <span class="truncate">Cek di Adobe</span>
             </a>
           </div>
         `;
+
         trendsGrid.appendChild(card);
       });
 
       lucide.createIcons();
     }
 
-    window.copyKeywords = function(encodedStr) {
-      const text = decodeURIComponent(encodedStr);
+    window.copyKeywords = function(encodedKw) {
+      const kw = decodeURIComponent(encodedKw);
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = kw;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+      showToast('Keywords berhasil disalin!');
+    };
+
+    // Advanced Multi-Engine AI Prompt Generator with Technical Specs & 3 Variants
+    function generateEnginePrompt(item, engine, variant = 1) {
+      if (!item) return '';
+
+      const isVideo = currentCategoryKey === 'video';
+      const isVector = currentCategoryKey === 'image';
+      const basePrompt = item.prompt || item.title;
+
+      // Variant modifier descriptors
+      let variantDesc = "";
+      let variantComposition = "";
+      if (variant === 1) {
+        variantDesc = "Wide dynamic hero composition highlighting authentic commercial appeal and emotional connection";
+        variantComposition = "Centered balanced subject, natural eye contact, editorial lighting";
+      } else if (variant === 2) {
+        variantDesc = "Minimalist layout with generous clean copy-space on the right side dedicated for corporate typography and advertising banners";
+        variantComposition = "Offset rule-of-thirds framing, negative space over 45%, clean background";
+      } else {
+        variantDesc = "Tight macro focus highlighting authentic tactile details, hands interacting, crisp texture and shallow depth of field";
+        variantComposition = "Macro close-up, sharp selective focus, creamy background bokeh";
+      }
+
+      // ChatGPT (DALL-E 3) Format - Natural, descriptive, professional art directive
+      if (engine === 'chatgpt') {
+        if (isVector) {
+          return `Professional commercial vector graphic illustration of ${item.title}. Angle & Setup: ${variantDesc}. Clean flat 2D vector styling with sharp EPS anchor points, smooth vector curves, balanced color harmony on a pristine solid isolated background. Optimized for web UI landing page and branding banner. Ensure zero raster noise, no distorted text, and no copyrighted logos.`;
+        } else if (isVideo) {
+          return `Professional cinematic keyframe still for a commercial video shoot representing ${item.title}. Visual composition: ${variantDesc}. Captured on ARRI Alexa Mini LF with Zeiss Supreme Primes, warm naturalistic lighting, authentic facial expressions, realistic color grading for high-end corporate media. No distorted features or synthetic artifacts.`;
+        } else {
+          return `A high-end commercial stock photograph of ${item.title}. Setup: ${variantDesc}. Shot on a 50mm f/1.8 lens in a bright, authentic modern environment. Emphasize natural skin textures, candid micro-expressions, and realistic ambient daylight. Ample clean composition, free of any digital blur, extra limbs, or artificial smoothing. Designed specifically for Adobe Stock high-commercial licensing.`;
+        }
+      } 
+      // Google Gemini (Imagen 3) Format - Technical, optics-focused, photorealistic syntax
+      else if (engine === 'gemini') {
+        if (isVector) {
+          return `High-precision vector design of ${item.title}, ${variantDesc}. Technical specs: Modern flat graphic art, SVG-ready clean geometry, scalable vector paths, vibrant yet professional color palette, isolated background, premium corporate design asset, vector illustration, zero artifacts.`;
+        } else if (isVideo) {
+          return `Cinematic photorealistic 8k frame capture of ${item.title}. ${variantDesc}. Optical specs: 35mm cinema lens, 24fps motion cadence, volumetric atmospheric light, authentic human performance, graded in natural Rec.709 palette, broadcast commercial quality.`;
+        } else {
+          return `Ultra-detailed commercial stock photography of ${item.title}. Framing: ${variantDesc}. Shot on Sony A7R V with 85mm f/1.4 G Master lens, 1/250s, ISO 100, diffused softbox combined with natural morning sunlight. Hyperrealistic skin pores, sharp focus on primary subject, perfectly balanced highlights, unbranded setting, copy-space ready for design overlay.`;
+        }
+      } 
+      // Google Veo 3 Format - Ultra high-end AI Video Prompting with camera & physics directive
+      else if (engine === 'veo3') {
+        let cameraMovement = "";
+        if (variant === 1) cameraMovement = "Slow, cinematic forward dolly shot at 60fps, perfectly stabilized camera gimbal.";
+        else if (variant === 2) cameraMovement = "Smooth right-to-left tracking pan maintaining vast negative copy-space on the right.";
+        else cameraMovement = "Extreme macro slow-motion focus pull from foreground detail into subject's reaction.";
+
+        return `Prompt for Google Veo 3: [Resolution: 4K 60fps] [Camera: ${cameraMovement}] [Scene: ${basePrompt}]. Professional commercial grade cinematography, realistic physics and natural human motion, soft cinematic lighting, zero morphing or temporal flickering, hyperrealistic textures, authentic color science, ready for Adobe Stock 4K video collection.`;
+      }
+
+      return basePrompt;
+    }
+
+    // Dynamic 49 Keywords Generator conforming to Adobe Stock 10-Golden + 39-Supporting rule
+    function build49Keywords(item, variant) {
+      if (!item) return [];
+
+      const base10 = Array.isArray(item.keywords) ? [...item.keywords] : [];
+      const titleWords = (item.title || "").toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+      const catWords = (item.category || "").toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 2);
+
+      // Variant-tailored primary keywords (Slot 1-10 priority booster)
+      let variantSpecific = [];
+      if (variant === 1) {
+        variantSpecific = ["commercial hero", "authentic emotion", "cinematic lighting", "high commercial value", "stock hero shot"];
+      } else if (variant === 2) {
+        variantSpecific = ["copy space", "negative space", "advertising banner", "text overlay ready", "minimalist background"];
+      } else {
+        variantSpecific = ["macro close up", "tactile detail", "hands action", "shallow depth of field", "selective focus"];
+      }
+
+      // Consolidate first 10 Golden keywords
+      const goldenPool = [...variantSpecific.slice(0, 3), ...base10, ...titleWords];
+      const goldenUnique = [];
+      goldenPool.forEach(kw => {
+        const clean = kw.trim().toLowerCase();
+        if (clean && !goldenUnique.includes(clean) && goldenUnique.length < 10) {
+          goldenUnique.push(clean);
+        }
+      });
+
+      // Supplementary contextual pools for Microstock (Technical, Commercial, Format, Mood)
+      const mediaPool = currentCategoryKey === 'video'
+        ? ["4k footage", "60fps", "b-roll", "slow motion", "cinematography", "gimbal motion", "broadcast quality", "stock video", "ultra hd", "raw clip"]
+        : currentCategoryKey === 'image'
+          ? ["vector illustration", "eps file", "scalable svg", "isolated background", "flat design", "graphic element", "clean outline", "clip art", "modern graphic", "ui asset"]
+          : ["dslr photography", "raw photo", "studio lighting", "commercial photography", "authentic human", "natural daylight", "high resolution", "8k portrait", "unbranded", "editorial quality"];
+
+      const buyerIntentPool = [
+        "corporate advertising", "marketing campaign", "website banner", "social media content", "editorial publication",
+        "brochure design", "business presentation", "annual report", "digital marketing", "billboard advertising",
+        "app interface", "promotional material", "content creation", "graphic design resource", "multimedia project"
+      ];
+
+      const aestheticAndMoodPool = [
+        "modern lifestyle", "professional aesthetic", "contemporary design", "clean composition", "vibrant tone",
+        "creative inspiration", "minimalist style", "horizontal framing", "vertical composition", "cutting edge",
+        "industry standard", "global market", "commercial usability", "visual communication", "premium collection"
+      ];
+
+      // Pool for 11 to 49
+      const secondaryPool = [
+        ...variantSpecific.slice(3),
+        ...base10.slice(7),
+        ...catWords,
+        ...mediaPool,
+        ...buyerIntentPool,
+        ...aestheticAndMoodPool
+      ];
+
+      const full49 = [...goldenUnique];
+      secondaryPool.forEach(kw => {
+        const clean = kw.trim().toLowerCase();
+        if (clean && !full49.includes(clean) && full49.length < 49) {
+          full49.push(clean);
+        }
+      });
+
+      return full49;
+    }
+
+    function updateAiPromptModalUI() {
+      if (!activePromptItem) return;
+
+      const activeTabClass = "flex items-center justify-center space-x-1.5 py-1.5 px-2 rounded-lg font-semibold bg-rose-600 text-white transition truncate shadow-sm";
+      const inactiveTabClass = "flex items-center justify-center space-x-1.5 py-1.5 px-2 rounded-lg font-semibold text-slate-400 hover:text-white transition truncate";
+
+      tabFirefly.className = currentEngine === 'chatgpt' ? activeTabClass : inactiveTabClass;
+      tabMidjourney.className = currentEngine === 'gemini' ? activeTabClass : inactiveTabClass;
+      tabVideoAI.className = currentEngine === 'veo3' ? activeTabClass : inactiveTabClass;
+
+      // Update variant tabs UI
+      const activeVarClass = "flex items-center justify-center space-x-1 py-1 px-2 rounded-lg font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm transition truncate";
+      const inactiveVarClass = "flex items-center justify-center space-x-1 py-1 px-2 rounded-lg font-medium text-slate-400 hover:text-white transition truncate";
+
+      varIdea1.className = currentVariant === 1 ? activeVarClass : inactiveVarClass;
+      varIdea2.className = currentVariant === 2 ? activeVarClass : inactiveVarClass;
+      varIdea3.className = currentVariant === 3 ? activeVarClass : inactiveVarClass;
+
+      modalPromptTitle.textContent = `${activePromptItem.title}`;
+      aiPromptContent.textContent = generateEnginePrompt(activePromptItem, currentEngine, currentVariant);
+
+      // Optics and composition specification breakdown
+      if (currentCategoryKey === 'image') {
+        modalOpticsSpec.textContent = "Format Vector EPS/SVG, Clean Anchor Points, RGB Color Space, Flat or Clay 3D Render Style.";
+        modalCompositionSpec.textContent = currentVariant === 2 ? "Generous Copy-Space (>45% negative space) for titles/text overlay." : "Centered modular icon asset with generous padding and isolated background.";
+      } else if (currentCategoryKey === 'video') {
+        modalOpticsSpec.textContent = "Google Veo 3: 4K 60fps/24fps, Smooth Gimbal/Dolly, 180° shutter angle natural motion blur.";
+        modalCompositionSpec.textContent = currentVariant === 2 ? "Clean side composition ideal for website hero banners and lower-third graphics." : "Cinematic 16:9 Landscape or 9:16 Vertical with smooth pacing.";
+      } else {
+        modalOpticsSpec.textContent = "Kamera 35mm / 85mm Prime Lens, Aperture f/1.8 - f/2.0, Natural Golden Hour or Diffused Studio Light.";
+        modalCompositionSpec.textContent = currentVariant === 2 ? "Extreme Negative Copy-Space (50% area kosong bersih) untuk teks desainer." : "Aturan sepertiga (Rule of Thirds) seimbang dengan fokus tajam.";
+      }
+
+      // Generate 49 keywords synchronized with current variant selection
+      generated49KeywordsList = build49Keywords(activePromptItem, currentVariant);
+      const top10 = generated49KeywordsList.slice(0, 10);
+      const supporting39 = generated49KeywordsList.slice(10, 49);
+
+      // Render Top 10 Golden Keywords
+      modalTop10Keywords.innerHTML = top10.map((kw, idx) => `
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 cursor-pointer hover:bg-emerald-500/30 transition" onclick="copyKeywords('${encodeURIComponent(kw)}')" title="Klik untuk salin keyword #${idx + 1}">
+          <span class="text-emerald-400 font-mono mr-1">#${idx + 1}</span> ${kw}
+        </span>
+      `).join('');
+
+      // Render Supporting Keywords (11-49)
+      modalSupportingKeywords.innerHTML = supporting39.map((kw, idx) => `
+        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-500 cursor-pointer hover:text-white transition" onclick="copyKeywords('${encodeURIComponent(kw)}')" title="Klik untuk salin keyword #${idx + 11}">
+          <span class="text-slate-500 font-mono mr-0.5">${idx + 11}.</span> ${kw}
+        </span>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    window.openDetailedAiPrompt = function(rank) {
+      const items = multiSourceData[currentSourceKey][currentCategoryKey] || [];
+      activePromptItem = items.find(i => i.rank === rank) || items[0];
+      currentEngine = (currentCategoryKey === 'video') ? 'veo3' : 'chatgpt';
+      currentVariant = 1;
+      updateAiPromptModalUI();
+      aiPromptModal.classList.remove('hidden');
+      aiPromptModal.classList.add('flex');
+    };
+
+    // Engine tab listeners
+    tabFirefly.addEventListener('click', () => {
+      currentEngine = 'chatgpt';
+      updateAiPromptModalUI();
+    });
+
+    tabMidjourney.addEventListener('click', () => {
+      currentEngine = 'gemini';
+      updateAiPromptModalUI();
+    });
+
+    tabVideoAI.addEventListener('click', () => {
+      currentEngine = 'veo3';
+      updateAiPromptModalUI();
+    });
+
+    // Variant tab listeners
+    varIdea1.addEventListener('click', () => {
+      currentVariant = 1;
+      updateAiPromptModalUI();
+    });
+
+    varIdea2.addEventListener('click', () => {
+      currentVariant = 2;
+      updateAiPromptModalUI();
+    });
+
+    varIdea3.addEventListener('click', () => {
+      currentVariant = 3;
+      updateAiPromptModalUI();
+    });
+
+    // Copy Top 10 Golden Keywords Only
+    copyTop10KeywordsBtn.addEventListener('click', () => {
+      const top10 = generated49KeywordsList.slice(0, 10).join(', ');
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = top10;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+      showToast('10 Golden Keywords pertama berhasil disalin!');
+    });
+
+    // Copy All 49 Standard Adobe Stock Keywords
+    copyAll49KeywordsBtn.addEventListener('click', () => {
+      const all49 = generated49KeywordsList.join(', ');
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = all49;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+      showToast(`Semua ${generated49KeywordsList.length} Keywords berhasil disalin siap paste!`);
+    });
+
+    // Copy Prompt Saja
+    copyPromptOnlyBtn.addEventListener('click', () => {
+      const text = aiPromptContent.textContent.trim();
       const tempTextArea = document.createElement('textarea');
       tempTextArea.value = text;
       document.body.appendChild(tempTextArea);
       tempTextArea.select();
       document.execCommand('copy');
       document.body.removeChild(tempTextArea);
-      showToast('10 Keywords berhasil disalin dalam urutan prioritas!');
-    };
+      showToast(`Prompt ${currentEngine.toUpperCase()} (Variasi ${currentVariant}) berhasil disalin!`);
+    });
 
-    window.openAiPrompt = function(encodedPrompt) {
-      const prompt = decodeURIComponent(encodedPrompt);
-      aiPromptContent.textContent = prompt;
-      aiPromptModal.classList.remove('hidden');
-      aiPromptModal.classList.add('flex');
-    };
+    // Copy Lengkap (Prompt + Negatif)
+    copyPromptBtn.addEventListener('click', () => {
+      const promptText = aiPromptContent.textContent.trim();
+      const negativeText = modalNegativePrompt.textContent.trim();
+      const fullPackage = `PROMPT:\n${promptText}\n\nNEGATIVE PROMPT (Filter Artefak & Reject):\n${negativeText}`;
+      
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = fullPackage;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+      showToast('Paket Prompt Lengkap + Negatif berhasil disalin!');
+      aiPromptModal.classList.add('hidden');
+      aiPromptModal.classList.remove('flex');
+    });
 
     window.resetFilters = function() {
       searchInput.value = '';
       searchQuery = '';
       filterType.value = 'all';
+      filterOpportunity.value = 'all';
       selectedFilter = 'all';
+      selectedOpportunity = 'all';
       renderTrends();
     };
 
@@ -2494,6 +3072,11 @@
 
     filterType.addEventListener('change', (e) => {
       selectedFilter = e.target.value;
+      renderTrends();
+    });
+
+    filterOpportunity.addEventListener('change', (e) => {
+      selectedOpportunity = e.target.value;
       renderTrends();
     });
 
